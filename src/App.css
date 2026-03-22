@@ -198,7 +198,7 @@ a { color: inherit; text-decoration: none; }
   margin-bottom: 16px;
 }
 .demo-header h2 { margin: 10px 0 0; font-size: 2rem; }
-.toolbar { display: flex; gap: 10px; flex-wrap: wrap; }
+.toolbar { display: flex; gap: 10px; flex-wrap: wrap; width: 100%; }
 
 .workspace-grid {
   display: grid;
@@ -256,6 +256,7 @@ a { color: inherit; text-decoration: none; }
   background: rgba(255,255,255,0.04);
   margin-bottom: 12px;
   color: #8ea7c7;
+  width: 100%;
 }
 .searchbar input {
   flex: 1;
@@ -366,7 +367,29 @@ a { color: inherit; text-decoration: none; }
 
 @media (max-width: 720px) {
   .page-shell { padding: 20px 14px 48px; }
-  .hero-copy, .hero-card, .panel { padding: 18px; }
-  .row { grid-template-columns: 88px minmax(140px,1fr) 92px 110px 52px; gap: 8px; font-size: 13px; }
+  .hero-copy, .hero-card, .panel, .cta-card, .target-card, .doc-card, .mini-card { padding: 18px; }
+  .hero-copy h1 { font-size: 2.2rem; }
+  .hero-text { font-size: 16px; }
+  .hero-actions, .hero-points, .toolbar, .detail-actions, .status-actions { flex-direction: column; align-items: stretch; }
+  .primary-btn, .secondary-btn, .toolbar-pill { justify-content: center; width: 100%; }
   .demo-header { align-items: start; flex-direction: column; }
+  .workspace-grid { grid-template-columns: 1fr; }
+  .table-head { display: none; }
+  .txn-row, .row {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+  .txn-row {
+    padding: 14px;
+  }
+  .txn-row span:nth-child(1) {
+    color: #8fa5c0;
+    font-size: 12px;
+  }
+  .txn-row span:nth-child(3), .txn-row span:nth-child(4), .txn-row span:nth-child(5) {
+    display: inline-flex;
+    justify-content: flex-start;
+  }
+  .detail-grid { grid-template-columns: 1fr; }
+  .target-card ul { padding-left: 16px; }
 }

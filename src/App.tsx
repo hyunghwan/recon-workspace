@@ -15,7 +15,7 @@ import {
   ShieldCheck,
   Upload,
 } from 'lucide-react'
-import { onAuthStateChanged, signInWithPopup, signOut, type User } from 'firebase/auth'
+import { onAuthStateChanged, signInWithPopup, signInWithRedirect, signOut, type User } from 'firebase/auth'
 import './App.css'
 import { statusOrder, transactions as seedTransactions, type Status, type Transaction } from './data'
 import { firebaseAuth, googleProvider, isFirebaseConfigured } from './firebase'
@@ -146,7 +146,19 @@ function App() {
 
   async function signInWithGoogle() {
     if (!firebaseAuth || !googleProvider) return
-    await signInWithPopup(firebaseAuth, googleProvider)
+
+    const isSmallScreen = window.matchMedia('(max-width: 720px)').matches
+
+    try {
+      if (isSmallScreen) {
+        await signInWithRedirect(firebaseAuth, googleProvider)
+        return
+      }
+
+      await signInWithPopup(firebaseAuth, googleProvider)
+    } catch {
+      await signInWithRedirect(firebaseAuth, googleProvider)
+    }
   }
 
   async function handleSignOut() {
@@ -236,13 +248,13 @@ function App() {
               </strong>
               <span>
                 {loadingCloud
-                  ? 'Loading cloud workspace…'
+                  ? 'Loading your workspace…'
                   : cloudMessage ||
                     (cloudEnabled
                       ? user
-                        ? 'Cloud save is ready.'
-                        : 'Sign in to save your workspace across devices.'
-                      : 'Add Firebase env vars to enable login, database, and hosting flow.')}
+                        ? 'Your workspace is ready to save across devices.'
+                        : 'Sign in to keep your reconciliation workspace synced.'
+                      : 'Cloud save will be available once the hosted environment is fully configured.')}
               </span>
             </div>
           </div>
@@ -463,7 +475,7 @@ function App() {
           </p>
           <div className="hero-actions compact">
             <a className="primary-btn" href="mailto:hello@reconworkspace.app?subject=Recon%20Workspace%20interest">Request early access</a>
-            <a className="secondary-btn" href="#demo">View the walkthrough</a>
+            <a className="secondary-btn" href="#demo">See the walkthrough</a>
           </div>
         </div>
       </section>
