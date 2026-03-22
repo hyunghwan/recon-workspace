@@ -1,0 +1,8 @@
+html { scroll-behavior: smooth; }
+body { min-width: 320px; min-height: 100vh; }
+#root { min-height: 100vh; }
+code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+  color: #d6e5ff;
+}
+button, input, textarea, select { font: inherit; }
