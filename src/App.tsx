@@ -156,7 +156,9 @@ function App() {
       }
 
       await signInWithPopup(firebaseAuth, googleProvider)
-    } catch {
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Google sign-in failed'
+      setCloudMessage(`Login issue: ${message}`)
       await signInWithRedirect(firebaseAuth, googleProvider)
     }
   }
@@ -216,10 +218,10 @@ function App() {
         <div className="hero-card auth-card">
           <div className="hero-card-header">
             <ShieldCheck size={18} />
-            <span>Built for bookkeepers</span>
+            <span>For live work, not just month-end panic</span>
           </div>
           <p className="auth-copy">
-            Recon Workspace gives you one place to review transactions, track missing documents, and keep a clean record of unresolved exceptions before close.
+            Keep transaction review, missing support, and unresolved exceptions in one clean workspace so nothing gets lost between spreadsheets, inboxes, and notes.
           </p>
           <div className="auth-stack">
             <div className="auth-state">
@@ -308,8 +310,8 @@ function App() {
       <section className="demo-section" id="demo">
         <div className="demo-header">
           <div>
-            <span className="eyebrow">Interactive walkthrough</span>
-            <h2>See the workspace in action</h2>
+            <span className="eyebrow">Product walkthrough</span>
+            <h2>A cleaner reconciliation workflow</h2>
           </div>
           <div className="toolbar">
             <label className="toolbar-pill clickable">
@@ -469,9 +471,9 @@ function App() {
       <section className="cta-section">
         <div className="cta-card">
           <span className="eyebrow">Early access</span>
-          <h2>Want to spend less time chasing receipts and exceptions?</h2>
+          <h2>Want a cleaner way to get unresolved items off your plate?</h2>
           <p>
-            Recon Workspace is being shaped for bookkeepers and small finance teams who need a cleaner reconciliation workflow before month-end close.
+            Recon Workspace is for bookkeepers and small finance teams who want fewer spreadsheet workarounds and a clearer path to close.
           </p>
           <div className="hero-actions compact">
             <a className="primary-btn" href="mailto:hello@reconworkspace.app?subject=Recon%20Workspace%20interest">Request early access</a>
