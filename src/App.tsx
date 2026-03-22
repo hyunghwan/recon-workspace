@@ -1,18 +1,16 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
-  AlertCircle,
   ArrowRight,
   CheckCircle2,
-  Clock3,
   Download,
-  FileText,
+  FilePlus2,
   Filter,
-  FolderOpen,
   LogIn,
   LogOut,
+  Plus,
   Save,
   Search,
-  ShieldCheck,
+  Trash2,
   Upload,
 } from 'lucide-react'
 import { getRedirectResult, onAuthStateChanged, signInWithPopup, signInWithRedirect, signOut, type User } from 'firebase/auth'
@@ -23,12 +21,36 @@ import { loadWorkspaceTransactions, saveWorkspaceTransactions } from './firestor
 import { loadTransactions, saveTransactions } from './storage'
 import { currency, parseCsvTransactions, unresolvedSummary } from './utils'
 
+type ViewMode = 'landing' | 'app'
+
+type DraftTransaction = {
+  date: string
+  merchant: string
+  memo: string
+  amount: string
+  source: string
+  status: Status
+  matchedDocs: string
+  note: string
+}
+
 const statusTone: Record<Status, string> = {
   matched: 'green',
   'missing docs': 'amber',
   'needs review': 'blue',
   exception: 'red',
   ignored: 'gray',
+}
+
+const emptyDraft: DraftTransaction = {
+  date: '',
+  merchant: '',
+  memo: '',
+  amount: '',
+  source: 'Imported Source',
+  status: 'needs review',
+  matchedDocs: '0',
+  note: '',
 }
 
 function downloadTextFile(filename: string, text: string) {
@@ -43,8 +65,14 @@ function downloadTextFile(filename: string, text: string) {
   URL.revokeObjectURL(url)
 }
 
+function getInitialView(): ViewMode {
+  if (typeof window === 'undefined') return 'landing'
+  return window.location.hash === '#app' ? 'app' : 'landing'
+}
+
 function App() {
   const initial = typeof window !== 'undefined' ? loadTransactions() : null
+  const [view, setView] = useState<ViewMode>(getInitialView())
   const [items, setItems] = useState<Transaction[]>(initial ?? seedTransactions)
   const [selectedStatus, setSelectedStatus] = useState<Status | 'all'>('all')
   const [selectedId, setSelectedId] = useState((initial ?? seedTransactions)[0].id)
@@ -54,11 +82,19 @@ function App() {
   const [cloudMessage, setCloudMessage] = useState('')
   const [saving, setSaving] = useState(false)
   const [loadingCloud, setLoadingCloud] = useState(false)
+  const [showAddForm, setShowAddForm] = useState(false)
+  const [draft, setDraft] = useState<DraftTransaction>(emptyDraft)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
 
   useEffect(() => {
     saveTransactions(items)
   }, [items])
+
+  useEffect(() => {
+    const onHashChange = () => setView(window.location.hash === '#app' ? 'app' : 'landing')
+    window.addEventListener('hashchange', onHashChange)
+    return () => window.removeEventListener('hashchange', onHashChange)
+  }, [])
 
   useEffect(() => {
     if (!firebaseAuth) return
@@ -104,7 +140,7 @@ function App() {
     })
   }, [items, selectedStatus, search])
 
-  const selected = filtered.find((txn) => txn.id === selectedId) ?? filtered[0] ?? items[0]
+  const selected = filtered.find((txn) => txn.id === selectedId) ?? filtered[0] ?? items[0] ?? null
 
   useEffect(() => {
     if (selected) {
@@ -113,11 +149,24 @@ function App() {
     }
   }, [selected?.id])
 
+  const stats = useMemo(() => {
+    const unresolved = items.filter((t) => ['missing docs', 'needs review', 'exception'].includes(t.status))
+    return {
+      total: items.length,
+      unresolved: unresolved.length,
+      missingDocs: items.filter((t) => t.status === 'missing docs').length,
+      exceptions: items.filter((t) => t.status === 'exception').length,
+      matched: items.filter((t) => t.status === 'matched').length,
+    }
+  }, [items])
+
   function updateSelected(patch: Partial<Transaction>) {
+    if (!selected) return
     setItems((current) => current.map((txn) => (txn.id === selected.id ? { ...txn, ...patch } : txn)))
   }
 
   function addActivity(text: string) {
+    if (!selected) return
     const stamp = new Date().toLocaleString()
     setItems((current) =>
       current.map((txn) =>
@@ -129,8 +178,10 @@ function App() {
   }
 
   function handleNoteSave() {
+    if (!selected) return
     updateSelected({ note: noteDraft })
     addActivity('Updated reconciliation note')
+    setCloudMessage('Note saved locally.')
   }
 
   async function handleCsvUpload(event: React.ChangeEvent<HTMLInputElement>) {
@@ -138,9 +189,14 @@ function App() {
     if (!file) return
     const text = await file.text()
     const parsed = parseCsvTransactions(text)
-    if (!parsed.length) return
+    if (!parsed.length) {
+      setCloudMessage('No valid transactions were found in that CSV.')
+      return
+    }
     setItems((current) => [...parsed, ...current])
     setSelectedId(parsed[0].id)
+    setView('app')
+    setCloudMessage(`Imported ${parsed.length} transactions from CSV.`)
   }
 
   function resetDemo() {
@@ -148,7 +204,7 @@ function App() {
     setSelectedId(seedTransactions[0].id)
     setSearch('')
     setSelectedStatus('all')
-    setCloudMessage('')
+    setCloudMessage('Demo workspace reset.')
   }
 
   async function signInWithGoogle() {
@@ -200,60 +256,173 @@ function App() {
     }
   }
 
+  function handleCreateTransaction() {
+    if (!draft.date || !draft.merchant || !draft.amount) {
+      setCloudMessage('Date, merchant, and amount are required.')
+      return
+    }
+
+    const next: Transaction = {
+      id: `manual_${Date.now()}`,
+      date: draft.date,
+      merchant: draft.merchant,
+      memo: draft.memo || draft.merchant,
+      amount: Number(draft.amount),
+      source: draft.source || 'Manual entry',
+      status: draft.status,
+      matchedDocs: Number(draft.matchedDocs || 0),
+      note: draft.note || 'Added manually',
+      activity: [{ at: new Date().toLocaleString(), text: 'Transaction added manually' }],
+    }
+
+    setItems((current) => [next, ...current])
+    setSelectedId(next.id)
+    setDraft(emptyDraft)
+    setShowAddForm(false)
+    setView('app')
+    setCloudMessage('Transaction added.')
+  }
+
+  function handleDeleteSelected() {
+    if (!selected) return
+    const remaining = items.filter((txn) => txn.id !== selected.id)
+    setItems(remaining)
+    if (remaining.length) {
+      setSelectedId(remaining[0].id)
+      setCloudMessage('Transaction deleted.')
+    } else {
+      setCloudMessage('Transaction deleted. Workspace is now empty.')
+    }
+  }
+
   const unresolvedText = unresolvedSummary(items)
   const cloudEnabled = isFirebaseConfigured
+  const isEmpty = items.length === 0
 
   return (
-    <div className="page-shell">
-      <section className="hero-section">
-        <div className="hero-copy">
-          <span className="eyebrow">Recon Workspace</span>
-          <h1>Keep reconciliation work organized before month-end gets messy.</h1>
-          <p className="hero-text">
-            Review transactions, track missing supporting documents, and stay on top of unresolved exceptions in one workspace built for bookkeepers and small finance teams.
-          </p>
-          <div className="hero-actions">
-            <a className="primary-btn" href="#demo">See how it works <ArrowRight size={16} /></a>
-            <a className="secondary-btn" href="#benefits">Why teams switch</a>
-          </div>
-          <div className="hero-points">
-            <span><CheckCircle2 size={16} /> spot missing support faster</span>
-            <span><CheckCircle2 size={16} /> keep unresolved items visible</span>
-            <span><CheckCircle2 size={16} /> reduce month-end scramble</span>
+    <div className="app-root">
+      <header className="topbar">
+        <div className="topbar-inner">
+          <a className="brand" href="#top" onClick={() => setView('landing')}>
+            <span className="brand-mark">R</span>
+            <span>Recon Workspace</span>
+          </a>
+          <nav className="topnav">
+            <button className={view === 'landing' ? 'nav-btn active' : 'nav-btn'} onClick={() => { window.location.hash = ''; setView('landing') }}>Overview</button>
+            <button className={view === 'app' ? 'nav-btn active' : 'nav-btn'} onClick={() => { window.location.hash = 'app'; setView('app') }}>App</button>
+          </nav>
+          <div className="topbar-actions">
+            {cloudEnabled && !user && (
+              <button className="primary-btn" onClick={signInWithGoogle}><LogIn size={16} /> Sign in with Google</button>
+            )}
+            {cloudEnabled && user && (
+              <button className="secondary-btn" onClick={handleSignOut}><LogOut size={16} /> Sign out</button>
+            )}
           </div>
         </div>
-        <div className="hero-card auth-card">
-          <div className="hero-card-header">
-            <ShieldCheck size={18} />
-            <span>For live work, not just month-end panic</span>
-          </div>
-          <p className="auth-copy">
-            Keep transaction review, missing support, and unresolved exceptions in one clean workspace so nothing gets lost between spreadsheets, inboxes, and notes.
-          </p>
-          <div className="auth-stack">
-            <div className="auth-state">
-              <strong>Stop juggling spreadsheets, inbox threads, and loose notes</strong>
-              <span>Keep every transaction in a clear status, add notes in context, and export unresolved items when it’s time to follow up.</span>
+      </header>
+
+      {view === 'landing' ? (
+        <main className="page-shell">
+          <section className="hero-section clean-hero">
+            <div className="hero-copy">
+              <span className="eyebrow">For bookkeepers and small finance teams</span>
+              <h1>Keep unresolved reconciliation work from turning into month-end chaos.</h1>
+              <p className="hero-text">
+                Recon Workspace helps you review transactions, track missing support, and keep exception follow-up in one clean place before close gets messy.
+              </p>
+              <div className="hero-actions">
+                <button className="primary-btn" onClick={() => { window.location.hash = 'app'; setView('app') }}>Open the app <ArrowRight size={16} /></button>
+                <a className="secondary-btn" href="mailto:hello@reconworkspace.app?subject=Recon%20Workspace%20interest">Request early access</a>
+              </div>
+              <div className="hero-points">
+                <span><CheckCircle2 size={16} /> catch missing docs earlier</span>
+                <span><CheckCircle2 size={16} /> keep unresolved items visible</span>
+                <span><CheckCircle2 size={16} /> reduce spreadsheet cleanup</span>
+              </div>
             </div>
-            <div className="hero-actions compact">
-              {cloudEnabled && !user && (
-                <button className="primary-btn" onClick={signInWithGoogle}><LogIn size={16} /> Continue with Google</button>
-              )}
-              {cloudEnabled && user && (
-                <>
-                  <button className="primary-btn" onClick={saveToCloud} disabled={saving}><Save size={16} /> {saving ? 'Saving…' : 'Save workspace'}</button>
-                  <button className="secondary-btn" onClick={handleSignOut}><LogOut size={16} /> Sign out</button>
-                </>
-              )}
-              {!cloudEnabled && <a className="secondary-btn" href="#demo">Explore the workspace</a>}
+            <div className="hero-summary">
+              <div className="summary-line"><span>Total transactions</span><strong>{stats.total}</strong></div>
+              <div className="summary-line"><span>Unresolved</span><strong>{stats.unresolved}</strong></div>
+              <div className="summary-line"><span>Missing docs</span><strong>{stats.missingDocs}</strong></div>
+              <div className="summary-line"><span>Exceptions</span><strong>{stats.exceptions}</strong></div>
             </div>
-            <div className="auth-state subtle">
+          </section>
+
+          <section className="info-grid" id="benefits">
+            <div className="info-block">
+              <h3>See unresolved items early</h3>
+              <p>Surface missing support and open exceptions before the end of the month instead of finding them too late.</p>
+            </div>
+            <div className="info-block">
+              <h3>Keep context attached to the transaction</h3>
+              <p>Notes, status, and follow-up stay with the transaction instead of getting buried in spreadsheets and inbox threads.</p>
+            </div>
+            <div className="info-block">
+              <h3>Make follow-up cleaner</h3>
+              <p>Export unresolved items, review what still blocks close, and keep everyone aligned on what needs action.</p>
+            </div>
+          </section>
+
+          <section className="who-grid">
+            <div className="who-block">
+              <h3>Who it’s for</h3>
+              <ul>
+                <li>Bookkeepers handling multiple clients</li>
+                <li>Small finance teams with messy month-end prep</li>
+                <li>Operators who need better reconciliation visibility</li>
+              </ul>
+            </div>
+            <div className="who-block">
+              <h3>Where teams lose time</h3>
+              <ul>
+                <li>Missing receipts discovered too late</li>
+                <li>Unclear transactions buried in notes</li>
+                <li>Follow-up split across tools</li>
+              </ul>
+            </div>
+          </section>
+
+          <section className="cta-section minimal">
+            <div className="cta-card simple">
+              <span className="eyebrow">Early access</span>
+              <h2>Want a cleaner way to get unresolved items off your plate?</h2>
+              <p>Try the app, or reach out if you want early access and product updates.</p>
+              <div className="hero-actions compact">
+                <button className="primary-btn" onClick={() => { window.location.hash = 'app'; setView('app') }}>Open the app</button>
+                <a className="secondary-btn" href="mailto:hello@reconworkspace.app?subject=Recon%20Workspace%20interest">Contact</a>
+              </div>
+            </div>
+          </section>
+        </main>
+      ) : (
+        <main className="workspace-shell">
+          <section className="workspace-header">
+            <div>
+              <span className="eyebrow">Workspace</span>
+              <h1>Reconciliation workspace</h1>
+              <p>{user ? 'Signed in workspace. Save your changes anytime.' : 'Demo mode. Sign in to save across devices.'}</p>
+            </div>
+            <div className="workspace-header-actions">
+              <button className="secondary-btn" onClick={() => setShowAddForm((v) => !v)}><Plus size={16} /> {showAddForm ? 'Close form' : 'Add transaction'}</button>
+              <label className="secondary-btn clickable">
+                <Upload size={15} /> Import CSV
+                <input ref={fileInputRef} type="file" accept=".csv,text/csv" onChange={handleCsvUpload} hidden />
+              </label>
+              <button className="secondary-btn" onClick={() => downloadTextFile('unresolved-items.txt', unresolvedText)}><Download size={15} /> Export unresolved</button>
+              <button className="secondary-btn" onClick={resetDemo}>Reset demo</button>
+              <button className="primary-btn" onClick={saveToCloud} disabled={saving || !cloudEnabled}><Save size={16} /> {saving ? 'Saving…' : 'Save'}</button>
+            </div>
+          </section>
+
+          <section className="status-banner">
+            <div>
               <strong>
                 {cloudEnabled
                   ? user
                     ? `Signed in as ${user.email ?? 'Google user'}`
                     : 'Google sign-in available'
-                  : 'Firebase config needed'}
+                  : 'Cloud save not configured'}
               </strong>
               <span>
                 {loadingCloud
@@ -266,229 +435,210 @@ function App() {
                       : 'Cloud save will be available once the hosted environment is fully configured.')}
               </span>
             </div>
-          </div>
-        </div>
-      </section>
+            {!user && cloudEnabled && (
+              <button className="primary-btn" onClick={signInWithGoogle}><LogIn size={16} /> Sign in with Google</button>
+            )}
+          </section>
 
-      <section className="docs-strip" id="benefits">
-        <div className="doc-card">
-          <FolderOpen size={18} />
-          <div>
-            <h3>See unresolved items early</h3>
-            <p>Instead of finding problems at the end of the month, surface missing docs and exceptions while there’s still time to fix them.</p>
-          </div>
-        </div>
-        <div className="doc-card">
-          <FileText size={18} />
-          <div>
-            <h3>Keep reconciliation work in one place</h3>
-            <p>Notes, status, supporting docs, and follow-up context stay tied to the transaction instead of getting scattered across tools.</p>
-          </div>
-        </div>
-      </section>
+          {showAddForm && (
+            <section className="add-form">
+              <div className="form-row two">
+                <label>
+                  <span>Date</span>
+                  <input type="date" value={draft.date} onChange={(e) => setDraft((d) => ({ ...d, date: e.target.value }))} />
+                </label>
+                <label>
+                  <span>Amount</span>
+                  <input type="number" step="0.01" value={draft.amount} onChange={(e) => setDraft((d) => ({ ...d, amount: e.target.value }))} placeholder="-125.00" />
+                </label>
+              </div>
+              <div className="form-row two">
+                <label>
+                  <span>Merchant</span>
+                  <input value={draft.merchant} onChange={(e) => setDraft((d) => ({ ...d, merchant: e.target.value }))} placeholder="Vendor or merchant" />
+                </label>
+                <label>
+                  <span>Source</span>
+                  <input value={draft.source} onChange={(e) => setDraft((d) => ({ ...d, source: e.target.value }))} placeholder="Operating Bank / Corporate Card" />
+                </label>
+              </div>
+              <div className="form-row two">
+                <label>
+                  <span>Memo</span>
+                  <input value={draft.memo} onChange={(e) => setDraft((d) => ({ ...d, memo: e.target.value }))} placeholder="Memo" />
+                </label>
+                <label>
+                  <span>Status</span>
+                  <select value={draft.status} onChange={(e) => setDraft((d) => ({ ...d, status: e.target.value as Status }))}>
+                    {statusOrder.map((status) => <option key={status} value={status}>{status}</option>)}
+                  </select>
+                </label>
+              </div>
+              <label>
+                <span>Note</span>
+                <textarea rows={3} value={draft.note} onChange={(e) => setDraft((d) => ({ ...d, note: e.target.value }))} placeholder="Why this item needs review, docs, or follow-up" />
+              </label>
+              <div className="form-actions">
+                <button className="primary-btn" onClick={handleCreateTransaction}><FilePlus2 size={16} /> Add transaction</button>
+                <button className="secondary-btn" onClick={() => setDraft(emptyDraft)}>Clear</button>
+              </div>
+            </section>
+          )}
 
-      <section className="target-strip">
-        <div className="target-card">
-          <h3>Who it’s for</h3>
-          <ul>
-            <li>Bookkeepers handling multiple clients</li>
-            <li>Small finance teams closing messy books</li>
-            <li>Operators who need cleaner support before close</li>
-          </ul>
-        </div>
-        <div className="target-card">
-          <h3>Common pain points</h3>
-          <ul>
-            <li>Missing receipts discovered too late</li>
-            <li>Unclear transactions buried in notes</li>
-            <li>Exceptions scattered across spreadsheets and email</li>
-          </ul>
-        </div>
-        <div className="target-card">
-          <h3>Why teams switch</h3>
-          <ul>
-            <li>Less spreadsheet cleanup</li>
-            <li>Cleaner follow-up before month-end</li>
-            <li>Better visibility into what still blocks close</li>
-          </ul>
-        </div>
-      </section>
+          <section className="summary-grid">
+            <div className="summary-box"><span>Total</span><strong>{stats.total}</strong></div>
+            <div className="summary-box"><span>Matched</span><strong>{stats.matched}</strong></div>
+            <div className="summary-box"><span>Missing docs</span><strong>{stats.missingDocs}</strong></div>
+            <div className="summary-box"><span>Exceptions</span><strong>{stats.exceptions}</strong></div>
+          </section>
 
-      <section className="demo-section" id="demo">
-        <div className="demo-header">
-          <div>
-            <span className="eyebrow">Product walkthrough</span>
-            <h2>A cleaner reconciliation workflow</h2>
-          </div>
-          <div className="toolbar">
-            <label className="toolbar-pill clickable">
-              <Upload size={15} /> Import CSV
-              <input ref={fileInputRef} type="file" accept=".csv,text/csv" onChange={handleCsvUpload} hidden />
-            </label>
-            <button className="toolbar-pill" onClick={() => downloadTextFile('unresolved-items.txt', unresolvedText)}><Download size={15} /> Export unresolved</button>
-            <button className="toolbar-pill" onClick={resetDemo}>Reset demo</button>
-          </div>
-        </div>
-
-        <div className="workspace-grid">
-          <aside className="panel sidebar">
-            <h3>Status views</h3>
-            <button className={selectedStatus === 'all' ? 'status-link active' : 'status-link'} onClick={() => setSelectedStatus('all')}>
-              All items <span>{items.length}</span>
-            </button>
-            {statusOrder.map((status) => (
-              <button
-                key={status}
-                className={selectedStatus === status ? 'status-link active' : 'status-link'}
-                onClick={() => setSelectedStatus(status)}
-              >
-                <span className={`dot ${statusTone[status]}`} />
-                {status}
-                <span>{items.filter((t) => t.status === status).length}</span>
-              </button>
-            ))}
-            <div className="sidebar-note">
-              <Clock3 size={16} />
-              <p>Most teams waste time on unresolved items, not the easy matches.</p>
-            </div>
-          </aside>
-
-          <div className="panel table-panel">
-            <div className="searchbar">
-              <Search size={16} />
-              <input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search merchant, memo, source, or note"
-              />
-              <Filter size={16} />
-            </div>
-            <div className="table-head row">
-              <span>Date</span>
-              <span>Merchant</span>
-              <span>Amount</span>
-              <span>Status</span>
-              <span>Docs</span>
-            </div>
-            <div className="table-body">
-              {filtered.map((txn) => (
-                <button
-                  key={txn.id}
-                  className={txn.id === selected.id ? 'txn-row row active' : 'txn-row row'}
-                  onClick={() => setSelectedId(txn.id)}
-                >
-                  <span>{txn.date}</span>
-                  <span>
-                    <strong>{txn.merchant}</strong>
-                    <small>{txn.memo}</small>
-                  </span>
-                  <span className={txn.amount < 0 ? 'negative' : 'positive'}>{currency(txn.amount)}</span>
-                  <span><span className={`badge ${statusTone[txn.status]}`}>{txn.status}</span></span>
-                  <span>{txn.matchedDocs}</span>
+          {isEmpty ? (
+            <section className="empty-state">
+              <h2>Your workspace is empty</h2>
+              <p>Add a transaction manually or import a CSV to start reviewing unresolved reconciliation work.</p>
+              <div className="hero-actions compact">
+                <button className="primary-btn" onClick={() => setShowAddForm(true)}><Plus size={16} /> Add first transaction</button>
+                <label className="secondary-btn clickable">
+                  <Upload size={15} /> Import CSV
+                  <input ref={fileInputRef} type="file" accept=".csv,text/csv" onChange={handleCsvUpload} hidden />
+                </label>
+              </div>
+            </section>
+          ) : (
+            <section className="workspace-grid">
+              <aside className="panel sidebar">
+                <h3>Status views</h3>
+                <button className={selectedStatus === 'all' ? 'status-link active' : 'status-link'} onClick={() => setSelectedStatus('all')}>
+                  All items <span>{items.length}</span>
                 </button>
-              ))}
-            </div>
-          </div>
-
-          <aside className="panel detail-panel">
-            <div className="detail-top">
-              <span className={`badge ${statusTone[selected.status]}`}>{selected.status}</span>
-              <h3>{selected.merchant}</h3>
-              <p>{selected.memo}</p>
-            </div>
-            <dl className="detail-grid">
-              <div><dt>Date</dt><dd>{selected.date}</dd></div>
-              <div><dt>Source</dt><dd>{selected.source}</dd></div>
-              <div><dt>Amount</dt><dd>{currency(selected.amount)}</dd></div>
-              <div><dt>Attached docs</dt><dd>{selected.matchedDocs}</dd></div>
-            </dl>
-            <div className="detail-block">
-              <h4>Update status</h4>
-              <div className="status-actions">
                 {statusOrder.map((status) => (
                   <button
                     key={status}
-                    className={selected.status === status ? `status-chip active ${statusTone[status]}` : `status-chip ${statusTone[status]}`}
-                    onClick={() => {
-                      updateSelected({ status })
-                      addActivity(`Changed status to ${status}`)
-                    }}
+                    className={selectedStatus === status ? 'status-link active' : 'status-link'}
+                    onClick={() => setSelectedStatus(status)}
                   >
+                    <span className={`dot ${statusTone[status]}`} />
                     {status}
+                    <span>{items.filter((t) => t.status === status).length}</span>
                   </button>
                 ))}
-              </div>
-            </div>
-            <div className="detail-block">
-              <h4>Bookkeeper note</h4>
-              <textarea value={noteDraft} onChange={(e) => setNoteDraft(e.target.value)} rows={4} />
-              <div className="detail-actions">
-                <button className="primary-btn small" onClick={handleNoteSave}>Save note</button>
-                <button className="secondary-btn small" onClick={() => {
-                  updateSelected({ matchedDocs: selected.matchedDocs + 1 })
-                  addActivity('Attached one supporting document')
-                }}>Add doc</button>
-              </div>
-            </div>
-            <div className="detail-block">
-              <h4>Suggested next action</h4>
-              <p>
-                {selected.status === 'missing docs'
-                  ? 'Request receipt and business purpose, then keep item unresolved until attached.'
-                  : selected.status === 'exception'
-                    ? 'Review variance against payout support and confirm whether refund timing explains mismatch.'
-                    : selected.status === 'needs review'
-                      ? 'Confirm classification and attach support before month-end close.'
-                      : 'Ready for close unless new variance appears.'}
-              </p>
-            </div>
-            <div className="detail-block">
-              <h4>Activity log</h4>
-              <ul className="activity-list">
-                {selected.activity.map((item) => (
-                  <li key={item.at + item.text}>
-                    <strong>{item.at}</strong>
-                    <span>{item.text}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </aside>
-        </div>
-      </section>
+                <div className="sidebar-note">
+                  Resolve exceptions early so month-end close is mostly review, not cleanup.
+                </div>
+              </aside>
 
-      <section className="positioning-section">
-        <div className="mini-card">
-          <AlertCircle size={18} />
-          <h3>Built for the messy part of close</h3>
-          <p>When receipts are missing, transactions are unclear, and support is scattered, Recon Workspace gives your team a cleaner way to get to done.</p>
-        </div>
-        <div className="mini-card">
-          <CheckCircle2 size={18} />
-          <h3>Made for small finance teams</h3>
-          <p>Too much for spreadsheets. Too little for enterprise close software. Recon Workspace is designed for the teams in between.</p>
-        </div>
-        <div className="mini-card">
-          <FileText size={18} />
-          <h3>Faster follow-up, fewer surprises</h3>
-          <p>Export unresolved items, keep decision notes attached to each transaction, and make month-end review less chaotic.</p>
-        </div>
-      </section>
+              <div className="panel table-panel">
+                <div className="searchbar">
+                  <Search size={16} />
+                  <input
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Search merchant, memo, source, or note"
+                  />
+                  <Filter size={16} />
+                </div>
+                <div className="table-head row">
+                  <span>Date</span>
+                  <span>Merchant</span>
+                  <span>Amount</span>
+                  <span>Status</span>
+                  <span>Docs</span>
+                </div>
+                <div className="table-body">
+                  {filtered.map((txn) => (
+                    <button
+                      key={txn.id}
+                      className={txn.id === selected?.id ? 'txn-row row active' : 'txn-row row'}
+                      onClick={() => setSelectedId(txn.id)}
+                    >
+                      <span>{txn.date}</span>
+                      <span>
+                        <strong>{txn.merchant}</strong>
+                        <small>{txn.memo}</small>
+                      </span>
+                      <span className={txn.amount < 0 ? 'negative' : 'positive'}>{currency(txn.amount)}</span>
+                      <span><span className={`badge ${statusTone[txn.status]}`}>{txn.status}</span></span>
+                      <span>{txn.matchedDocs}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
 
-      <section className="cta-section">
-        <div className="cta-card">
-          <span className="eyebrow">Early access</span>
-          <h2>Want a cleaner way to get unresolved items off your plate?</h2>
-          <p>
-            Recon Workspace is for bookkeepers and small finance teams who want fewer spreadsheet workarounds and a clearer path to close.
-          </p>
-          <div className="hero-actions compact">
-            <a className="primary-btn" href="mailto:hello@reconworkspace.app?subject=Recon%20Workspace%20interest">Request early access</a>
-            <a className="secondary-btn" href="#demo">See the walkthrough</a>
-          </div>
-          <p className="cta-footnote">Current priority: get the signed-in workflow reliable, then keep polishing the day-to-day reconciliation experience.</p>
-        </div>
-      </section>
+              <aside className="panel detail-panel">
+                {selected ? (
+                  <>
+                    <div className="detail-top">
+                      <span className={`badge ${statusTone[selected.status]}`}>{selected.status}</span>
+                      <h3>{selected.merchant}</h3>
+                      <p>{selected.memo}</p>
+                    </div>
+                    <dl className="detail-grid">
+                      <div><dt>Date</dt><dd>{selected.date}</dd></div>
+                      <div><dt>Source</dt><dd>{selected.source}</dd></div>
+                      <div><dt>Amount</dt><dd>{currency(selected.amount)}</dd></div>
+                      <div><dt>Attached docs</dt><dd>{selected.matchedDocs}</dd></div>
+                    </dl>
+                    <div className="detail-block">
+                      <h4>Update status</h4>
+                      <div className="status-actions">
+                        {statusOrder.map((status) => (
+                          <button
+                            key={status}
+                            className={selected.status === status ? `status-chip active ${statusTone[status]}` : `status-chip ${statusTone[status]}`}
+                            onClick={() => {
+                              updateSelected({ status })
+                              addActivity(`Changed status to ${status}`)
+                            }}
+                          >
+                            {status}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="detail-block">
+                      <h4>Bookkeeper note</h4>
+                      <textarea value={noteDraft} onChange={(e) => setNoteDraft(e.target.value)} rows={4} />
+                      <div className="detail-actions">
+                        <button className="primary-btn small" onClick={handleNoteSave}>Save note</button>
+                        <button className="secondary-btn small" onClick={() => {
+                          updateSelected({ matchedDocs: selected.matchedDocs + 1 })
+                          addActivity('Attached one supporting document')
+                        }}>Add doc</button>
+                        <button className="secondary-btn small danger" onClick={handleDeleteSelected}><Trash2 size={14} /> Delete</button>
+                      </div>
+                    </div>
+                    <div className="detail-block">
+                      <h4>Suggested next action</h4>
+                      <p>
+                        {selected.status === 'missing docs'
+                          ? 'Request receipt and business purpose, then keep item unresolved until attached.'
+                          : selected.status === 'exception'
+                            ? 'Review variance against payout support and confirm whether refund timing explains mismatch.'
+                            : selected.status === 'needs review'
+                              ? 'Confirm classification and attach support before month-end close.'
+                              : 'Ready for close unless new variance appears.'}
+                      </p>
+                    </div>
+                    <div className="detail-block">
+                      <h4>Activity log</h4>
+                      <ul className="activity-list">
+                        {selected.activity.map((item) => (
+                          <li key={item.at + item.text}>
+                            <strong>{item.at}</strong>
+                            <span>{item.text}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </>
+                ) : (
+                  <div className="empty-inline">Select a transaction to see details.</div>
+                )}
+              </aside>
+            </section>
+          )}
+        </main>
+      )}
     </div>
   )
 }
