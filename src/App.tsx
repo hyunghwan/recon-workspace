@@ -231,33 +231,32 @@ function App() {
       <section className="hero-section">
         <div className="hero-copy">
           <span className="eyebrow">Recon Workspace</span>
-          <h1>Reconcile statements. Track exceptions. Close faster.</h1>
+          <h1>Keep reconciliation work organized before month-end gets messy.</h1>
           <p className="hero-text">
-            A reconciliation workspace for bookkeepers and small finance teams who are tired of managing
-            missing receipts, unmatched transactions, and month-end exceptions in spreadsheets.
+            Review transactions, track missing supporting documents, and stay on top of unresolved exceptions in one workspace built for bookkeepers and small finance teams.
           </p>
           <div className="hero-actions">
-            <a className="primary-btn" href="#demo">View demo workspace <ArrowRight size={16} /></a>
-            <a className="secondary-btn" href="#docs">Product docs</a>
+            <a className="primary-btn" href="#demo">See how it works <ArrowRight size={16} /></a>
+            <a className="secondary-btn" href="#benefits">Why teams switch</a>
           </div>
           <div className="hero-points">
-            <span><CheckCircle2 size={16} /> status-first workflow</span>
-            <span><CheckCircle2 size={16} /> exception tracking</span>
-            <span><CheckCircle2 size={16} /> supporting-doc follow-up</span>
+            <span><CheckCircle2 size={16} /> spot missing support faster</span>
+            <span><CheckCircle2 size={16} /> keep unresolved items visible</span>
+            <span><CheckCircle2 size={16} /> reduce month-end scramble</span>
           </div>
         </div>
         <div className="hero-card auth-card">
           <div className="hero-card-header">
             <ShieldCheck size={18} />
-            <span>Auth + cloud save</span>
+            <span>Built for bookkeepers</span>
           </div>
           <p className="auth-copy">
-            Demo mode works without login. Real workspace persistence is designed for Google sign-in via Supabase.
+            Recon Workspace gives you one place to review transactions, track missing documents, and keep a clean record of unresolved exceptions before close.
           </p>
           <div className="auth-stack">
             <div className="auth-state">
-              <strong>{cloudEnabled ? (sessionEmail ? 'Cloud ready' : 'Google login available') : 'Demo mode only'}</strong>
-              <span>{cloudEnabled ? (sessionEmail ?? 'Sign in to save transactions to cloud') : 'Add Supabase env vars to enable auth + database'}</span>
+              <strong>Stop juggling spreadsheets, inbox threads, and loose notes</strong>
+              <span>Keep every transaction in a clear status, add notes in context, and export unresolved items when it’s time to follow up.</span>
             </div>
             <div className="hero-actions compact">
               {cloudEnabled && !sessionEmail && (
@@ -265,29 +264,30 @@ function App() {
               )}
               {cloudEnabled && sessionEmail && (
                 <>
-                  <button className="primary-btn" onClick={saveToCloud} disabled={saving}><Save size={16} /> {saving ? 'Saving…' : 'Save to cloud'}</button>
+                  <button className="primary-btn" onClick={saveToCloud} disabled={saving}><Save size={16} /> {saving ? 'Saving…' : 'Save workspace'}</button>
                   <button className="secondary-btn" onClick={signOut}><LogOut size={16} /> Sign out</button>
                 </>
               )}
+              {!cloudEnabled && <a className="secondary-btn" href="#demo">Explore the workspace</a>}
             </div>
             {cloudMessage && <p className="cloud-message">{cloudMessage}</p>}
           </div>
         </div>
       </section>
 
-      <section className="docs-strip" id="docs">
+      <section className="docs-strip" id="benefits">
         <div className="doc-card">
           <FolderOpen size={18} />
           <div>
-            <h3>Docs included</h3>
-            <p>vision, MVP scope, GTM outline, architecture notes, Supabase setup, and content assets are committed in <code>/docs</code>.</p>
+            <h3>See unresolved items early</h3>
+            <p>Instead of finding problems at the end of the month, surface missing docs and exceptions while there’s still time to fix them.</p>
           </div>
         </div>
         <div className="doc-card">
           <FileText size={18} />
           <div>
-            <h3>Wedge</h3>
-            <p>Start with unresolved transactions and missing supporting documents, not full accounting.</p>
+            <h3>Keep reconciliation work in one place</h3>
+            <p>Notes, status, supporting docs, and follow-up context stay tied to the transaction instead of getting scattered across tools.</p>
           </div>
         </div>
       </section>
@@ -295,8 +295,8 @@ function App() {
       <section className="demo-section" id="demo">
         <div className="demo-header">
           <div>
-            <span className="eyebrow">Interactive MVP</span>
-            <h2>Sample reconciliation workspace</h2>
+            <span className="eyebrow">Interactive walkthrough</span>
+            <h2>See the workspace in action</h2>
           </div>
           <div className="toolbar">
             <label className="toolbar-pill clickable">
@@ -438,18 +438,18 @@ function App() {
       <section className="positioning-section">
         <div className="mini-card">
           <AlertCircle size={18} />
-          <h3>Not another accounting system</h3>
-          <p>Recon Workspace lives before the books are clean — in the messy prep layer where files, receipts, statements, and exceptions still need human review.</p>
+          <h3>Built for the messy part of close</h3>
+          <p>When receipts are missing, transactions are unclear, and support is scattered, Recon Workspace gives your team a cleaner way to get to done.</p>
         </div>
         <div className="mini-card">
           <CheckCircle2 size={18} />
-          <h3>First wedge</h3>
-          <p>Missing-doc chasing and unresolved item tracking are the sharpest entry point for bookkeeping agencies and small finance teams.</p>
+          <h3>Made for small finance teams</h3>
+          <p>Too much for spreadsheets. Too little for enterprise close software. Recon Workspace is designed for the teams in between.</p>
         </div>
         <div className="mini-card">
           <FileText size={18} />
-          <h3>Now structured for cloud mode</h3>
-          <p>Demo mode works without login. Cloud mode is prepared for Google sign-in and Supabase-backed transaction persistence.</p>
+          <h3>Faster follow-up, fewer surprises</h3>
+          <p>Export unresolved items, keep decision notes attached to each transaction, and make month-end review less chaotic.</p>
         </div>
       </section>
     </div>
