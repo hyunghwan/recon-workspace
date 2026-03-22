@@ -611,13 +611,15 @@ function App() {
                       <h3>{selected.merchant}</h3>
                       <p>{selected.memo}</p>
                     </div>
-                    <dl className="detail-grid compact-detail-grid">
-                      <div><dt>Date</dt><dd>{selected.date}</dd></div>
-                      <div><dt>Source</dt><dd>{selected.source}</dd></div>
-                      <div><dt>Amount</dt><dd>{currency(selected.amount)}</dd></div>
-                      <div><dt>Docs</dt><dd>{selected.matchedDocs}</dd></div>
-                    </dl>
-                    <div className="detail-block">
+                    <section className="detail-section">
+                      <dl className="detail-grid compact-detail-grid">
+                        <div><dt>Date</dt><dd>{selected.date}</dd></div>
+                        <div><dt>Source</dt><dd>{selected.source}</dd></div>
+                        <div><dt>Amount</dt><dd>{currency(selected.amount)}</dd></div>
+                        <div><dt>Docs</dt><dd>{selected.matchedDocs}</dd></div>
+                      </dl>
+                    </section>
+                    <section className="detail-section">
                       <h4>Status</h4>
                       <div className="status-actions wrap-tight">
                         {statusOrder.map((status) => (
@@ -633,8 +635,8 @@ function App() {
                           </button>
                         ))}
                       </div>
-                    </div>
-                    <div className="detail-block">
+                    </section>
+                    <section className="detail-section">
                       <h4>Note</h4>
                       <textarea value={noteDraft} onChange={(e) => setNoteDraft(e.target.value)} rows={3} />
                       <div className="detail-actions">
@@ -645,8 +647,8 @@ function App() {
                         }}>Add doc</button>
                         <button className="secondary-btn small danger" onClick={handleDeleteSelected}><Trash2 size={14} /> Delete</button>
                       </div>
-                    </div>
-                    <div className="detail-block">
+                    </section>
+                    <section className="detail-section">
                       <h4>Next action</h4>
                       <p>
                         {selected.status === 'missing docs'
@@ -657,8 +659,8 @@ function App() {
                               ? 'Confirm classification and attach support before month-end close.'
                               : 'Ready for close unless new variance appears.'}
                       </p>
-                    </div>
-                    <div className="detail-block">
+                    </section>
+                    <section className="detail-section">
                       <h4>Activity</h4>
                       <ul className="activity-list">
                         {selected.activity.map((item) => (
@@ -668,7 +670,7 @@ function App() {
                           </li>
                         ))}
                       </ul>
-                    </div>
+                    </section>
                   </>
                 ) : (
                   <div className="empty-inline">Select a transaction to see details.</div>

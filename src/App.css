@@ -298,7 +298,6 @@ button, input, textarea, select { font: inherit; }
 .searchbar,
 .sidebar-note,
 .detail-grid div,
-.detail-block,
 .txn-row,
 .empty-inline,
 .summary-box {
@@ -438,6 +437,21 @@ button, input, textarea, select { font: inherit; }
   margin-bottom: 10px;
   border-bottom: 1px solid var(--line);
 }
+.detail-section {
+  padding: 12px 0;
+  border-top: 1px solid var(--line);
+}
+.detail-section:first-of-type {
+  border-top: none;
+  padding-top: 0;
+}
+.detail-section h4 {
+  margin: 0 0 8px;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--muted);
+}
 .status-link {
   width: 100%;
   border: 1px solid var(--line);
@@ -563,10 +577,9 @@ button, input, textarea, select { font: inherit; }
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 8px;
-  margin: 0 0 10px;
+  margin: 0;
 }
-.detail-grid div,
-.detail-block { padding: 10px; }
+.detail-grid div { padding: 10px; }
 .detail-grid dt {
   color: var(--muted);
   font-size: 10px;
