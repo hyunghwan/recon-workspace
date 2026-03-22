@@ -247,7 +247,8 @@ button, input, textarea, select { font: inherit; }
 .workflow-strip,
 .info-grid,
 .who-grid,
-.summary-grid {
+.summary-grid,
+.import-summary {
   display: grid;
   gap: 12px;
 }
@@ -255,6 +256,7 @@ button, input, textarea, select { font: inherit; }
 .info-grid { grid-template-columns: repeat(3, 1fr); margin-top: 14px; }
 .who-grid { grid-template-columns: repeat(2, 1fr); margin-top: 14px; }
 .summary-grid { grid-template-columns: repeat(4, 1fr); }
+.import-summary { grid-template-columns: repeat(4, minmax(0, 1fr)); margin-top: 0; }
 .compact-summary { gap: 8px; }
 
 .workflow-step strong,
@@ -351,18 +353,35 @@ button, input, textarea, select { font: inherit; }
 .detail-block textarea { resize: vertical; }
 .dense-form textarea { min-height: 72px; }
 
-.summary-box {
+.summary-box,
+.import-summary-card,
+.import-summary-note {
   padding: 12px 14px;
 }
-.summary-box span {
+.summary-box span,
+.import-summary-card span,
+.import-summary-note {
   color: var(--muted);
   display: block;
   margin-bottom: 4px;
   font-size: 12px;
 }
-.summary-box strong {
+.summary-box strong,
+.import-summary-card strong {
   font-size: 1.2rem;
   letter-spacing: -0.03em;
+}
+.import-summary-card,
+.import-summary-note {
+  border: 1px solid var(--line);
+  background: var(--panel);
+  border-radius: 10px;
+}
+.import-summary-note {
+  display: flex;
+  align-items: center;
+  font-size: 13px;
+  line-height: 1.5;
 }
 
 .workspace-grid.dense-grid {
@@ -541,6 +560,7 @@ button, input, textarea, select { font: inherit; }
   .info-grid,
   .who-grid,
   .summary-grid,
+  .import-summary,
   .workspace-grid.dense-grid,
   .workspace-header {
     grid-template-columns: 1fr;

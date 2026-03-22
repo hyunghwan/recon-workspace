@@ -34,6 +34,14 @@ type DraftTransaction = {
   note: string
 }
 
+type ImportSummary = {
+  imported: number
+  matched: number
+  unresolved: number
+  missingDocs: number
+  exceptions: number
+}
+
 const statusTone: Record<Status, string> = {
   matched: 'green',
   'missing docs': 'amber',
@@ -70,6 +78,20 @@ function getInitialView(): ViewMode {
   return window.location.hash === '#app' ? 'app' : 'landing'
 }
 
+function buildImportSummary(parsed: Transaction[]): ImportSummary {
+  const missingDocs = parsed.filter((t) => t.status === 'missing docs').length
+  const exceptions = parsed.filter((t) => t.status === 'exception').length
+  const unresolved = parsed.filter((t) => ['missing docs', 'needs review', 'exception'].includes(t.status)).length
+  const matched = parsed.filter((t) => t.status === 'matched').length
+  return {
+    imported: parsed.length,
+    matched,
+    unresolved,
+    missingDocs,
+    exceptions,
+  }
+}
+
 function App() {
   const initial = typeof window !== 'undefined' ? loadTransactions() : null
   const [view, setView] = useState<ViewMode>(getInitialView())
@@ -84,6 +106,7 @@ function App() {
   const [loadingCloud, setLoadingCloud] = useState(false)
   const [showAddForm, setShowAddForm] = useState(false)
   const [draft, setDraft] = useState<DraftTransaction>(emptyDraft)
+  const [lastImportSummary, setLastImportSummary] = useState<ImportSummary | null>(null)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
 
   useEffect(() => {
@@ -116,7 +139,7 @@ function App() {
             setSelectedId(cloudItems[0].id)
             setCloudMessage(`Loaded ${cloudItems.length} transactions from cloud.`)
           } else {
-            setCloudMessage('Signed in. Start by importing a CSV or adding a transaction.')
+            setCloudMessage('Signed in. Start by importing a CSV or adding a transaction, then save your workspace.')
           }
         } catch (error) {
           const message = error instanceof Error ? error.message : 'Unknown cloud load error'
@@ -193,6 +216,9 @@ function App() {
       setCloudMessage('No valid transactions were found in that CSV. Use columns like date, merchant, memo, amount, source, status.')
       return
     }
+
+    const summary = buildImportSummary(parsed)
+    setLastImportSummary(summary)
     setItems((current) => [...parsed, ...current])
     setSelectedId(parsed[0].id)
     setView('app')
@@ -324,7 +350,7 @@ function App() {
               </p>
               <div className="hero-actions">
                 <button className="primary-btn" onClick={() => { window.location.hash = 'app'; setView('app') }}>Open the app <ArrowRight size={16} /></button>
-                <a className="secondary-btn" href="#workflow">See the workflow</a>
+                <a className="secondary-btn" href="/sample-transactions.csv" download>Download sample CSV</a>
               </div>
               <div className="hero-points compact-points">
                 <span><CheckCircle2 size={16} /> import CSV from your statement export</span>
@@ -369,37 +395,6 @@ function App() {
               <p>Recon Workspace sits between manual spreadsheet cleanup and heavyweight enterprise close software.</p>
             </div>
           </section>
-
-          <section className="who-grid">
-            <div className="who-block">
-              <h3>Who it’s for</h3>
-              <ul>
-                <li>Bookkeepers handling multiple clients</li>
-                <li>Small finance teams with messy month-end prep</li>
-                <li>Operators reviewing bank and card activity before close</li>
-              </ul>
-            </div>
-            <div className="who-block">
-              <h3>Typical inputs</h3>
-              <ul>
-                <li>Bank statement CSV exports</li>
-                <li>Corporate card transaction exports</li>
-                <li>Manual transaction entries from unclear activity</li>
-              </ul>
-            </div>
-          </section>
-
-          <section className="cta-section minimal">
-            <div className="cta-card simple">
-              <span className="eyebrow">Early access</span>
-              <h2>Use the app, then tell us what still slows down close.</h2>
-              <p>This product is aimed at the messy middle: after statement export, before your books feel clean.</p>
-              <div className="hero-actions compact">
-                <button className="primary-btn" onClick={() => { window.location.hash = 'app'; setView('app') }}>Open the app</button>
-                <a className="secondary-btn" href="mailto:hello@reconworkspace.app?subject=Recon%20Workspace%20interest">Contact</a>
-              </div>
-            </div>
-          </section>
         </main>
       ) : (
         <main className="workspace-shell">
@@ -415,6 +410,7 @@ function App() {
                 <Upload size={15} /> Import CSV
                 <input ref={fileInputRef} type="file" accept=".csv,text/csv" onChange={handleCsvUpload} hidden />
               </label>
+              <a className="secondary-btn" href="/sample-transactions.csv" download>Download sample CSV</a>
               <button className="secondary-btn" onClick={() => downloadTextFile('unresolved-items.txt', unresolvedText)}><Download size={15} /> Export unresolved</button>
               <button className="primary-btn" onClick={saveToCloud} disabled={saving || !cloudEnabled}><Save size={16} /> {saving ? 'Saving…' : 'Save'}</button>
             </div>
@@ -423,12 +419,36 @@ function App() {
           <section className="entry-banner">
             <div className="entry-copy">
               <strong>How to use this</strong>
-              <span>Start by importing a CSV export from your bank statement or corporate card. Then mark missing docs, exceptions, and review items.</span>
+              <span>Import a CSV from your bank statement, card export, or accounting workflow. Then review unresolved items and save your workspace if you want it synced.</span>
             </div>
             {!user && cloudEnabled && (
               <button className="secondary-btn" onClick={signInWithGoogle}><LogIn size={16} /> Sign in with Google</button>
             )}
           </section>
+
+          {lastImportSummary && (
+            <section className="import-summary">
+              <div className="import-summary-card">
+                <strong>Last import</strong>
+                <span>{lastImportSummary.imported} transactions imported</span>
+              </div>
+              <div className="import-summary-card">
+                <strong>{lastImportSummary.unresolved}</strong>
+                <span>need action</span>
+              </div>
+              <div className="import-summary-card">
+                <strong>{lastImportSummary.missingDocs}</strong>
+                <span>missing docs</span>
+              </div>
+              <div className="import-summary-card">
+                <strong>{lastImportSummary.exceptions}</strong>
+                <span>exceptions</span>
+              </div>
+              <div className="import-summary-note">
+                Next step: review <strong>missing docs</strong> and <strong>exception</strong> items first, then export unresolved follow-up.
+              </div>
+            </section>
+          )}
 
           <section className="status-banner slim">
             <div>
@@ -450,6 +470,7 @@ function App() {
                       : 'Cloud save will be available once the hosted environment is fully configured.')}
               </span>
             </div>
+            {user && <button className="secondary-btn" onClick={saveToCloud} disabled={saving}>{saving ? 'Saving…' : 'Save now'}</button>}
           </section>
 
           {showAddForm && (
@@ -505,13 +526,14 @@ function App() {
           {isEmpty ? (
             <section className="empty-state compact-empty">
               <h2>No transactions yet</h2>
-              <p>Import a CSV from a statement export or add a transaction manually to start reviewing unresolved reconciliation work.</p>
+              <p>Start with the sample CSV or import a statement export to see unresolved reconciliation work immediately.</p>
               <div className="hero-actions compact">
-                <button className="primary-btn" onClick={() => setShowAddForm(true)}><Plus size={16} /> Add first transaction</button>
-                <label className="secondary-btn clickable">
+                <a className="secondary-btn" href="/sample-transactions.csv" download>Download sample CSV</a>
+                <label className="primary-btn clickable">
                   <Upload size={15} /> Import CSV
                   <input ref={fileInputRef} type="file" accept=".csv,text/csv" onChange={handleCsvUpload} hidden />
                 </label>
+                <button className="secondary-btn" onClick={() => setShowAddForm(true)}><Plus size={16} /> Add first transaction</button>
               </div>
             </section>
           ) : (
