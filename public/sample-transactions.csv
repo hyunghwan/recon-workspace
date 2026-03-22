@@ -1,0 +1,6 @@
+date,merchant,memo,amount,source,status,matchedDocs,note
+2026-03-02,Stripe Fees,March payout fees,-182.44,Operating Bank,needs review,0,Need fee breakdown support
+2026-03-03,Adobe,Creative Cloud annual plan,-659.88,Corporate Card,matched,1,Invoice attached
+2026-03-04,Delta Air Lines,Client travel,-438.21,Corporate Card,missing docs,0,Need receipt and business purpose
+2026-03-06,Shopify Payout,Payout #49822,8421.62,Operating Bank,exception,2,Deposit variance against payout summary
+2026-03-08,Cash Withdrawal,ATM withdrawal,-300,Operating Bank,needs review,0,Confirm owner draw vs reimbursable spend
