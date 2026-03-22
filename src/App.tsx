@@ -516,7 +516,7 @@ function App() {
             </section>
           )}
 
-          <section className="summary-grid compact-summary">
+          <section className="summary-grid compact-summary data-strip">
             <div className="summary-box"><span>Total</span><strong>{stats.total}</strong></div>
             <div className="summary-box"><span>Matched</span><strong>{stats.matched}</strong></div>
             <div className="summary-box"><span>Missing docs</span><strong>{stats.missingDocs}</strong></div>
@@ -537,9 +537,9 @@ function App() {
               </div>
             </section>
           ) : (
-            <section className="workspace-grid dense-grid">
-              <aside className="panel sidebar narrow">
-                <h3>Status</h3>
+            <section className="workspace-grid dense-grid alt-layout">
+              <aside className="sidebar-rail">
+                <div className="rail-section-title">Views</div>
                 <button className={selectedStatus === 'all' ? 'status-link active' : 'status-link'} onClick={() => setSelectedStatus('all')}>
                   All items <span>{items.length}</span>
                 </button>
@@ -556,8 +556,12 @@ function App() {
                 ))}
               </aside>
 
-              <div className="panel table-panel wide">
-                <div className="table-toolbar">
+              <div className="table-surface wide">
+                <div className="table-toolbar dense-toolbar">
+                  <div className="surface-title-group">
+                    <h3>Transactions</h3>
+                    <span>{filtered.length} visible</span>
+                  </div>
                   <div className="searchbar compact-search">
                     <Search size={16} />
                     <input
@@ -568,14 +572,14 @@ function App() {
                     <Filter size={16} />
                   </div>
                 </div>
-                <div className="table-head row">
+                <div className="table-head row recon-head">
                   <span>Date</span>
-                  <span>Merchant</span>
+                  <span>Transaction</span>
                   <span>Amount</span>
                   <span>Status</span>
                   <span>Docs</span>
                 </div>
-                <div className="table-body">
+                <div className="table-body grid-body">
                   {filtered.map((txn) => (
                     <button
                       key={txn.id}
@@ -595,7 +599,11 @@ function App() {
                 </div>
               </div>
 
-              <aside className="panel detail-panel">
+              <aside className="detail-surface">
+                <div className="surface-title-group detail-title-group">
+                  <h3>Details</h3>
+                  <span>{selected ? selected.status : 'No selection'}</span>
+                </div>
                 {selected ? (
                   <>
                     <div className="detail-top compact-detail-top">
