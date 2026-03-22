@@ -292,6 +292,33 @@ function App() {
         </div>
       </section>
 
+      <section className="target-strip">
+        <div className="target-card">
+          <h3>Who it’s for</h3>
+          <ul>
+            <li>Bookkeepers handling multiple clients</li>
+            <li>Small finance teams closing messy books</li>
+            <li>Operators who need cleaner support before close</li>
+          </ul>
+        </div>
+        <div className="target-card">
+          <h3>Common pain points</h3>
+          <ul>
+            <li>Missing receipts discovered too late</li>
+            <li>Unclear transactions buried in notes</li>
+            <li>Exceptions scattered across spreadsheets and email</li>
+          </ul>
+        </div>
+        <div className="target-card">
+          <h3>Why teams switch</h3>
+          <ul>
+            <li>Less spreadsheet cleanup</li>
+            <li>Cleaner follow-up before month-end</li>
+            <li>Better visibility into what still blocks close</li>
+          </ul>
+        </div>
+      </section>
+
       <section className="demo-section" id="demo">
         <div className="demo-header">
           <div>
@@ -450,6 +477,20 @@ function App() {
           <FileText size={18} />
           <h3>Faster follow-up, fewer surprises</h3>
           <p>Export unresolved items, keep decision notes attached to each transaction, and make month-end review less chaotic.</p>
+        </div>
+      </section>
+
+      <section className="cta-section">
+        <div className="cta-card">
+          <span className="eyebrow">Early access</span>
+          <h2>Want to spend less time chasing receipts and exceptions?</h2>
+          <p>
+            Recon Workspace is being shaped for bookkeepers and small finance teams who need a cleaner reconciliation workflow before month-end close.
+          </p>
+          <div className="hero-actions compact">
+            <a className="primary-btn" href="mailto:hello@reconworkspace.app?subject=Recon%20Workspace%20interest">Request early access</a>
+            <a className="secondary-btn" href="#demo">View the walkthrough</a>
+          </div>
         </div>
       </section>
     </div>
