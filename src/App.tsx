@@ -1,7 +1,21 @@
-import { useMemo, useState } from 'react'
-import { AlertCircle, ArrowRight, CheckCircle2, Clock3, FileText, Filter, FolderOpen, Search, Sparkles } from 'lucide-react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import {
+  AlertCircle,
+  ArrowRight,
+  CheckCircle2,
+  Clock3,
+  Download,
+  FileText,
+  Filter,
+  FolderOpen,
+  Search,
+  Sparkles,
+  Upload,
+} from 'lucide-react'
 import './App.css'
-import { statusOrder, transactions, type Status } from './data'
+import { statusOrder, transactions as seedTransactions, type Status, type Transaction } from './data'
+import { loadTransactions, saveTransactions } from './storage'
+import { currency, parseCsvTransactions, unresolvedSummary } from './utils'
 
 const statusTone: Record<Status, string> = {
   matched: 'green',
@@ -11,35 +25,98 @@ const statusTone: Record<Status, string> = {
   ignored: 'gray',
 }
 
-function currency(amount: number) {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 2,
-  }).format(amount)
+function downloadTextFile(filename: string, text: string) {
+  const blob = new Blob([text], { type: 'text/plain;charset=utf-8' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = filename
+  document.body.appendChild(link)
+  link.click()
+  link.remove()
+  URL.revokeObjectURL(url)
 }
 
 function App() {
+  const initial = typeof window !== 'undefined' ? loadTransactions() : null
+  const [items, setItems] = useState<Transaction[]>(initial ?? seedTransactions)
   const [selectedStatus, setSelectedStatus] = useState<Status | 'all'>('all')
-  const [selectedId, setSelectedId] = useState(transactions[0].id)
+  const [selectedId, setSelectedId] = useState((initial ?? seedTransactions)[0].id)
+  const [search, setSearch] = useState('')
+  const [noteDraft, setNoteDraft] = useState((initial ?? seedTransactions)[0].note)
+  const fileInputRef = useRef<HTMLInputElement | null>(null)
+
+  useEffect(() => {
+    saveTransactions(items)
+  }, [items])
 
   const filtered = useMemo(() => {
-    return selectedStatus === 'all'
-      ? transactions
-      : transactions.filter((txn) => txn.status === selectedStatus)
-  }, [selectedStatus])
+    return items.filter((txn) => {
+      const statusMatch = selectedStatus === 'all' || txn.status === selectedStatus
+      const searchMatch =
+        !search ||
+        [txn.merchant, txn.memo, txn.source, txn.note].join(' ').toLowerCase().includes(search.toLowerCase())
+      return statusMatch && searchMatch
+    })
+  }, [items, selectedStatus, search])
 
-  const selected = filtered.find((txn) => txn.id === selectedId) ?? filtered[0] ?? transactions[0]
+  const selected = filtered.find((txn) => txn.id === selectedId) ?? filtered[0] ?? items[0]
+
+  useEffect(() => {
+    if (selected) {
+      setSelectedId(selected.id)
+      setNoteDraft(selected.note)
+    }
+  }, [selected?.id])
 
   const stats = useMemo(() => {
-    const unresolved = transactions.filter((t) => ['missing docs', 'needs review', 'exception'].includes(t.status))
+    const unresolved = items.filter((t) => ['missing docs', 'needs review', 'exception'].includes(t.status))
     return {
-      total: transactions.length,
+      total: items.length,
       unresolved: unresolved.length,
-      missingDocs: transactions.filter((t) => t.status === 'missing docs').length,
-      exceptions: transactions.filter((t) => t.status === 'exception').length,
+      missingDocs: items.filter((t) => t.status === 'missing docs').length,
+      exceptions: items.filter((t) => t.status === 'exception').length,
     }
-  }, [])
+  }, [items])
+
+  function updateSelected(patch: Partial<Transaction>) {
+    setItems((current) => current.map((txn) => (txn.id === selected.id ? { ...txn, ...patch } : txn)))
+  }
+
+  function addActivity(text: string) {
+    const stamp = new Date().toLocaleString()
+    setItems((current) =>
+      current.map((txn) =>
+        txn.id === selected.id
+          ? { ...txn, activity: [{ at: stamp, text }, ...txn.activity] }
+          : txn,
+      ),
+    )
+  }
+
+  function handleNoteSave() {
+    updateSelected({ note: noteDraft })
+    addActivity('Updated reconciliation note')
+  }
+
+  async function handleCsvUpload(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0]
+    if (!file) return
+    const text = await file.text()
+    const parsed = parseCsvTransactions(text)
+    if (!parsed.length) return
+    setItems((current) => [...parsed, ...current])
+    setSelectedId(parsed[0].id)
+  }
+
+  function resetDemo() {
+    setItems(seedTransactions)
+    setSelectedId(seedTransactions[0].id)
+    setSearch('')
+    setSelectedStatus('all')
+  }
+
+  const unresolvedText = unresolvedSummary(items)
 
   return (
     <div className="page-shell">
@@ -48,7 +125,7 @@ function App() {
           <span className="eyebrow">Recon Workspace</span>
           <h1>Reconcile statements. Track exceptions. Close faster.</h1>
           <p className="hero-text">
-            A reconciliation workspace for bookkeepers and finance teams who are tired of managing
+            A reconciliation workspace for bookkeepers and small finance teams who are tired of managing
             missing receipts, unmatched transactions, and month-end exceptions in spreadsheets.
           </p>
           <div className="hero-actions">
@@ -95,7 +172,7 @@ function App() {
           <FolderOpen size={18} />
           <div>
             <h3>Docs included</h3>
-            <p>vision, MVP scope, GTM outline, and architecture notes are committed in <code>/docs</code>.</p>
+            <p>vision, MVP scope, GTM outline, architecture notes, and content assets are committed in <code>/docs</code>.</p>
           </div>
         </div>
         <div className="doc-card">
@@ -110,12 +187,16 @@ function App() {
       <section className="demo-section" id="demo">
         <div className="demo-header">
           <div>
-            <span className="eyebrow">Interactive demo</span>
+            <span className="eyebrow">Interactive MVP</span>
             <h2>Sample reconciliation workspace</h2>
           </div>
           <div className="toolbar">
-            <button className="toolbar-pill"><Search size={15} /> Search transactions</button>
-            <button className="toolbar-pill"><Filter size={15} /> Filters</button>
+            <label className="toolbar-pill clickable">
+              <Upload size={15} /> Import CSV
+              <input ref={fileInputRef} type="file" accept=".csv,text/csv" onChange={handleCsvUpload} hidden />
+            </label>
+            <button className="toolbar-pill" onClick={() => downloadTextFile('unresolved-items.txt', unresolvedText)}><Download size={15} /> Export unresolved</button>
+            <button className="toolbar-pill" onClick={resetDemo}>Reset demo</button>
           </div>
         </div>
 
@@ -123,7 +204,7 @@ function App() {
           <aside className="panel sidebar">
             <h3>Status views</h3>
             <button className={selectedStatus === 'all' ? 'status-link active' : 'status-link'} onClick={() => setSelectedStatus('all')}>
-              All items <span>{transactions.length}</span>
+              All items <span>{items.length}</span>
             </button>
             {statusOrder.map((status) => (
               <button
@@ -133,7 +214,7 @@ function App() {
               >
                 <span className={`dot ${statusTone[status]}`} />
                 {status}
-                <span>{transactions.filter((t) => t.status === status).length}</span>
+                <span>{items.filter((t) => t.status === status).length}</span>
               </button>
             ))}
             <div className="sidebar-note">
@@ -143,6 +224,15 @@ function App() {
           </aside>
 
           <div className="panel table-panel">
+            <div className="searchbar">
+              <Search size={16} />
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search merchant, memo, source, or note"
+              />
+              <Filter size={16} />
+            </div>
             <div className="table-head row">
               <span>Date</span>
               <span>Merchant</span>
@@ -183,8 +273,32 @@ function App() {
               <div><dt>Attached docs</dt><dd>{selected.matchedDocs}</dd></div>
             </dl>
             <div className="detail-block">
+              <h4>Update status</h4>
+              <div className="status-actions">
+                {statusOrder.map((status) => (
+                  <button
+                    key={status}
+                    className={selected.status === status ? `status-chip active ${statusTone[status]}` : `status-chip ${statusTone[status]}`}
+                    onClick={() => {
+                      updateSelected({ status })
+                      addActivity(`Changed status to ${status}`)
+                    }}
+                  >
+                    {status}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="detail-block">
               <h4>Bookkeeper note</h4>
-              <p>{selected.note}</p>
+              <textarea value={noteDraft} onChange={(e) => setNoteDraft(e.target.value)} rows={4} />
+              <div className="detail-actions">
+                <button className="primary-btn small" onClick={handleNoteSave}>Save note</button>
+                <button className="secondary-btn small" onClick={() => {
+                  updateSelected({ matchedDocs: selected.matchedDocs + 1 })
+                  addActivity('Attached one supporting document')
+                }}>Add doc</button>
+              </div>
             </div>
             <div className="detail-block">
               <h4>Suggested next action</h4>
@@ -227,7 +341,7 @@ function App() {
         <div className="mini-card">
           <FileText size={18} />
           <h3>Built for validation</h3>
-          <p>This first release is a believable front-end demo for interviews, iteration, and eventual Vercel deployment.</p>
+          <p>This MVP now includes CSV import, status updates, note editing, local persistence, and unresolved export.</p>
         </div>
       </section>
     </div>
