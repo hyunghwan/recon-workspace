@@ -15,7 +15,7 @@ import {
   ShieldCheck,
   Upload,
 } from 'lucide-react'
-import { onAuthStateChanged, signInWithPopup, signInWithRedirect, signOut, type User } from 'firebase/auth'
+import { getRedirectResult, onAuthStateChanged, signInWithPopup, signInWithRedirect, signOut, type User } from 'firebase/auth'
 import './App.css'
 import { statusOrder, transactions as seedTransactions, type Status, type Transaction } from './data'
 import { firebaseAuth, googleProvider, isFirebaseConfigured } from './firebase'
@@ -63,6 +63,11 @@ function App() {
   useEffect(() => {
     if (!firebaseAuth) return
 
+    getRedirectResult(firebaseAuth).catch((error) => {
+      const message = error instanceof Error ? error.message : 'Unknown redirect sign-in error'
+      setCloudMessage(`Login issue: ${message}`)
+    })
+
     const unsub = onAuthStateChanged(firebaseAuth, async (nextUser) => {
       setUser(nextUser)
 
@@ -74,6 +79,8 @@ function App() {
             setItems(cloudItems)
             setSelectedId(cloudItems[0].id)
             setCloudMessage(`Loaded ${cloudItems.length} transactions from cloud.`)
+          } else {
+            setCloudMessage('Signed in. Your cloud workspace is empty for now.')
           }
         } catch (error) {
           const message = error instanceof Error ? error.message : 'Unknown cloud load error'
@@ -255,7 +262,7 @@ function App() {
                     (cloudEnabled
                       ? user
                         ? 'Your workspace is ready to save across devices.'
-                        : 'Sign in to keep your reconciliation workspace synced.'
+                        : 'Sign in to keep your reconciliation workspace synced. If login fails, check Google provider and authorized domain settings in Firebase Auth.'
                       : 'Cloud save will be available once the hosted environment is fully configured.')}
               </span>
             </div>
@@ -479,6 +486,7 @@ function App() {
             <a className="primary-btn" href="mailto:hello@reconworkspace.app?subject=Recon%20Workspace%20interest">Request early access</a>
             <a className="secondary-btn" href="#demo">See the walkthrough</a>
           </div>
+          <p className="cta-footnote">Current priority: get the signed-in workflow reliable, then keep polishing the day-to-day reconciliation experience.</p>
         </div>
       </section>
     </div>

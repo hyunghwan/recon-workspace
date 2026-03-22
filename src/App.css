@@ -243,6 +243,11 @@ button, input, textarea, select { font: inherit; }
   line-height: 1.1;
   letter-spacing: -0.03em;
 }
+.cta-footnote {
+  margin-top: 12px;
+  font-size: 13px;
+  color: #6b7280;
+}
 
 .demo-section {
   margin-top: 28px;
