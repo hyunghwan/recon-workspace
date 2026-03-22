@@ -110,6 +110,24 @@ a { color: inherit; text-decoration: none; }
   padding: 24px;
 }
 
+.auth-card .auth-copy {
+  color: #a8b8cf;
+  line-height: 1.6;
+}
+.auth-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.auth-state {
+  padding: 16px;
+  border-radius: 16px;
+  background: rgba(255,255,255,0.04);
+}
+.auth-state strong { display: block; margin-bottom: 6px; }
+.auth-state span, .cloud-message { color: #9fb0c7; line-height: 1.5; }
+.hero-actions.compact { margin-top: 0; }
+
 .hero-card-header {
   display: flex;
   align-items: center;

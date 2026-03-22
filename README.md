@@ -11,7 +11,9 @@ It focuses on the messy layer before the books are clean:
 ## Current state
 This repository contains:
 - product docs in `/docs`
-- a React + TypeScript demo UI
+- a React + TypeScript MVP UI
+- demo mode without login
+- cloud-ready auth/DB scaffolding for Supabase + Google login
 - a Vercel-ready front-end build
 
 ## Docs
@@ -19,6 +21,10 @@ This repository contains:
 - `docs/mvp.md`
 - `docs/gtm.md`
 - `docs/architecture.md`
+- `docs/content-marketing.md`
+- `docs/seo-article-month-end-close.md`
+- `docs/supabase-setup.md`
+- `docs/supabase-schema.sql`
 
 ## Local development
 ```bash

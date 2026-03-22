@@ -8,13 +8,17 @@ import {
   FileText,
   Filter,
   FolderOpen,
+  LogIn,
+  LogOut,
+  Save,
   Search,
-  Sparkles,
+  ShieldCheck,
   Upload,
 } from 'lucide-react'
 import './App.css'
 import { statusOrder, transactions as seedTransactions, type Status, type Transaction } from './data'
 import { loadTransactions, saveTransactions } from './storage'
+import { isSupabaseConfigured, supabase } from './supabase'
 import { currency, parseCsvTransactions, unresolvedSummary } from './utils'
 
 const statusTone: Record<Status, string> = {
@@ -44,11 +48,28 @@ function App() {
   const [selectedId, setSelectedId] = useState((initial ?? seedTransactions)[0].id)
   const [search, setSearch] = useState('')
   const [noteDraft, setNoteDraft] = useState((initial ?? seedTransactions)[0].note)
+  const [sessionEmail, setSessionEmail] = useState<string | null>(null)
+  const [cloudMessage, setCloudMessage] = useState('')
+  const [saving, setSaving] = useState(false)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
 
   useEffect(() => {
     saveTransactions(items)
   }, [items])
+
+  useEffect(() => {
+    if (!supabase) return
+
+    supabase.auth.getSession().then(({ data }) => {
+      setSessionEmail(data.session?.user?.email ?? null)
+    })
+
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSessionEmail(session?.user?.email ?? null)
+    })
+
+    return () => listener.subscription.unsubscribe()
+  }, [])
 
   const filtered = useMemo(() => {
     return items.filter((txn) => {
@@ -68,16 +89,6 @@ function App() {
       setNoteDraft(selected.note)
     }
   }, [selected?.id])
-
-  const stats = useMemo(() => {
-    const unresolved = items.filter((t) => ['missing docs', 'needs review', 'exception'].includes(t.status))
-    return {
-      total: items.length,
-      unresolved: unresolved.length,
-      missingDocs: items.filter((t) => t.status === 'missing docs').length,
-      exceptions: items.filter((t) => t.status === 'exception').length,
-    }
-  }, [items])
 
   function updateSelected(patch: Partial<Transaction>) {
     setItems((current) => current.map((txn) => (txn.id === selected.id ? { ...txn, ...patch } : txn)))
@@ -114,9 +125,106 @@ function App() {
     setSelectedId(seedTransactions[0].id)
     setSearch('')
     setSelectedStatus('all')
+    setCloudMessage('')
+  }
+
+  async function signInWithGoogle() {
+    if (!supabase) return
+    await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: window.location.origin,
+      },
+    })
+  }
+
+  async function signOut() {
+    if (!supabase) return
+    await supabase.auth.signOut()
+    setCloudMessage('Signed out.')
+  }
+
+  async function saveToCloud() {
+    if (!supabase) {
+      setCloudMessage('Supabase is not configured yet. Add env vars to enable cloud save.')
+      return
+    }
+
+    const {
+      data: { session },
+    } = await supabase.auth.getSession()
+
+    if (!session) {
+      setCloudMessage('Please sign in with Google first.')
+      return
+    }
+
+    setSaving(true)
+    setCloudMessage('')
+
+    const userId = session.user.id
+
+    const { data: existingWorkspace, error: workspaceError } = await supabase
+      .from('workspaces')
+      .select('id,name,owner_user_id')
+      .eq('owner_user_id', userId)
+      .limit(1)
+      .maybeSingle()
+
+    if (workspaceError) {
+      setSaving(false)
+      setCloudMessage(`Workspace error: ${workspaceError.message}`)
+      return
+    }
+
+    let workspaceId = existingWorkspace?.id
+
+    if (!workspaceId) {
+      const { data: createdWorkspace, error: createWorkspaceError } = await supabase
+        .from('workspaces')
+        .insert({ owner_user_id: userId, name: 'Default Workspace' })
+        .select('id')
+        .single()
+
+      if (createWorkspaceError || !createdWorkspace) {
+        setSaving(false)
+        setCloudMessage(`Create workspace error: ${createWorkspaceError?.message ?? 'Unknown error'}`)
+        return
+      }
+
+      workspaceId = createdWorkspace.id
+    }
+
+    const rows = items.map((item) => ({
+      id: item.id,
+      workspace_id: workspaceId,
+      user_id: userId,
+      date: item.date,
+      merchant: item.merchant,
+      memo: item.memo,
+      amount: item.amount,
+      source: item.source,
+      status: item.status,
+      matched_docs: item.matchedDocs,
+      note: item.note,
+      activity: item.activity,
+      updated_at: new Date().toISOString(),
+    }))
+
+    const { error: upsertError } = await supabase.from('transactions').upsert(rows)
+
+    setSaving(false)
+
+    if (upsertError) {
+      setCloudMessage(`Cloud save error: ${upsertError.message}`)
+      return
+    }
+
+    setCloudMessage(`Saved ${rows.length} transactions to cloud.`)
   }
 
   const unresolvedText = unresolvedSummary(items)
+  const cloudEnabled = isSupabaseConfigured
 
   return (
     <div className="page-shell">
@@ -138,32 +246,32 @@ function App() {
             <span><CheckCircle2 size={16} /> supporting-doc follow-up</span>
           </div>
         </div>
-        <div className="hero-card">
+        <div className="hero-card auth-card">
           <div className="hero-card-header">
-            <Sparkles size={18} />
-            <span>Month-end summary</span>
+            <ShieldCheck size={18} />
+            <span>Auth + cloud save</span>
           </div>
-          <div className="hero-stat-grid">
-            <div>
-              <strong>{stats.total}</strong>
-              <span>transactions</span>
-            </div>
-            <div>
-              <strong>{stats.unresolved}</strong>
-              <span>unresolved</span>
-            </div>
-            <div>
-              <strong>{stats.missingDocs}</strong>
-              <span>missing docs</span>
-            </div>
-            <div>
-              <strong>{stats.exceptions}</strong>
-              <span>exceptions</span>
-            </div>
-          </div>
-          <p>
-            Biggest blockers this month: missing travel receipts, payout variances, and unexplained cash movement.
+          <p className="auth-copy">
+            Demo mode works without login. Real workspace persistence is designed for Google sign-in via Supabase.
           </p>
+          <div className="auth-stack">
+            <div className="auth-state">
+              <strong>{cloudEnabled ? (sessionEmail ? 'Cloud ready' : 'Google login available') : 'Demo mode only'}</strong>
+              <span>{cloudEnabled ? (sessionEmail ?? 'Sign in to save transactions to cloud') : 'Add Supabase env vars to enable auth + database'}</span>
+            </div>
+            <div className="hero-actions compact">
+              {cloudEnabled && !sessionEmail && (
+                <button className="primary-btn" onClick={signInWithGoogle}><LogIn size={16} /> Continue with Google</button>
+              )}
+              {cloudEnabled && sessionEmail && (
+                <>
+                  <button className="primary-btn" onClick={saveToCloud} disabled={saving}><Save size={16} /> {saving ? 'Saving…' : 'Save to cloud'}</button>
+                  <button className="secondary-btn" onClick={signOut}><LogOut size={16} /> Sign out</button>
+                </>
+              )}
+            </div>
+            {cloudMessage && <p className="cloud-message">{cloudMessage}</p>}
+          </div>
         </div>
       </section>
 
@@ -172,7 +280,7 @@ function App() {
           <FolderOpen size={18} />
           <div>
             <h3>Docs included</h3>
-            <p>vision, MVP scope, GTM outline, architecture notes, and content assets are committed in <code>/docs</code>.</p>
+            <p>vision, MVP scope, GTM outline, architecture notes, Supabase setup, and content assets are committed in <code>/docs</code>.</p>
           </div>
         </div>
         <div className="doc-card">
@@ -340,8 +448,8 @@ function App() {
         </div>
         <div className="mini-card">
           <FileText size={18} />
-          <h3>Built for validation</h3>
-          <p>This MVP now includes CSV import, status updates, note editing, local persistence, and unresolved export.</p>
+          <h3>Now structured for cloud mode</h3>
+          <p>Demo mode works without login. Cloud mode is prepared for Google sign-in and Supabase-backed transaction persistence.</p>
         </div>
       </section>
     </div>
