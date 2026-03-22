@@ -40,6 +40,6 @@ The project includes:
 After `firebase login` and after setting the correct project id in `.firebaserc`:
 
 ```bash
-npm run build
+pnpm build
 firebase deploy
 ```

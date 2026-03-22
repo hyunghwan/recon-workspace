@@ -28,13 +28,13 @@ This repository contains:
 
 ## Local development
 ```bash
-npm install
-npm run dev
+pnpm install
+pnpm dev
 ```
 
 ## Production build
 ```bash
-npm run build
+pnpm build
 ```
 
 ## Deployment
