@@ -662,29 +662,106 @@ function AppWorkspace() {
   )
 }
 
+function LoginGate() {
+  const [gateMessage, setGateMessage] = useState('')
+
+  async function handleGateSignIn() {
+    if (!firebaseAuth || !googleProvider) return
+
+    const isSmallScreen = window.matchMedia('(max-width: 720px)').matches
+
+    try {
+      if (isSmallScreen) {
+        await signInWithRedirect(firebaseAuth, googleProvider)
+        return
+      }
+      await signInWithPopup(firebaseAuth, googleProvider)
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Google sign-in failed'
+      setGateMessage(`Login issue: ${message}`)
+      await signInWithRedirect(firebaseAuth, googleProvider)
+    }
+  }
+
+  return (
+    <main className="page-shell landing-shell">
+      <section className="hero-section clean-hero landing-only">
+        <div className="hero-copy">
+          <span className="eyebrow">Sign in required</span>
+          <h1>Use Google sign-in to access the reconciliation workspace.</h1>
+          <p className="hero-text">
+            Sample CSV is public, but the actual app workspace now opens only after login.
+          </p>
+          <div className="hero-actions">
+            <button className="primary-btn" onClick={handleGateSignIn}><LogIn size={16} /> Sign in with Google</button>
+            <a className="secondary-btn" href="/sample-transactions.csv" download>Download sample CSV</a>
+          </div>
+          <div className="hero-points compact-points">
+            <span><CheckCircle2 size={16} /> import statement or card CSV</span>
+            <span><CheckCircle2 size={16} /> review missing docs and exceptions</span>
+            <span><CheckCircle2 size={16} /> save synced workspace after login</span>
+          </div>
+          {gateMessage && <p className="cloud-message">{gateMessage}</p>}
+        </div>
+        <div className="hero-summary landing-summary">
+          <div className="summary-line"><span>Access</span><strong>Login</strong></div>
+          <div className="summary-line"><span>Sample</span><strong>CSV only</strong></div>
+          <div className="summary-line"><span>Workspace</span><strong>Protected</strong></div>
+        </div>
+      </section>
+    </main>
+  )
+}
+
 function App() {
-  const path = typeof window !== 'undefined' ? window.location.pathname : '/'
+  const [path, setPath] = useState(typeof window !== 'undefined' ? window.location.pathname : '/')
+  const [user, setUser] = useState<User | null>(null)
+  const [authReady, setAuthReady] = useState(false)
   const isAppRoute = path === '/app'
+
+  useEffect(() => {
+    const onPopState = () => setPath(window.location.pathname)
+    window.addEventListener('popstate', onPopState)
+    return () => window.removeEventListener('popstate', onPopState)
+  }, [])
+
+  useEffect(() => {
+    if (!firebaseAuth) {
+      setAuthReady(true)
+      return
+    }
+
+    const unsub = onAuthStateChanged(firebaseAuth, (nextUser) => {
+      setUser(nextUser)
+      setAuthReady(true)
+
+      if (nextUser && window.location.pathname !== '/app') {
+        window.location.replace('/app')
+      }
+    })
+
+    return () => unsub()
+  }, [])
 
   return (
     <div className="app-root">
       <header className="topbar">
         <div className="topbar-inner">
-          <a className="brand" href="/">
+          <a className="brand" href={user ? '/app' : '/'}>
             <span className="brand-mark">R</span>
             <span>Recon Workspace</span>
           </a>
           <nav className="topnav">
-            <a className={isAppRoute ? 'nav-btn' : 'nav-btn active'} href="/">Overview</a>
+            {!user && <a className={isAppRoute ? 'nav-btn' : 'nav-btn active'} href="/">Overview</a>}
             <a className={isAppRoute ? 'nav-btn active' : 'nav-btn'} href="/app">App</a>
           </nav>
           <div className="topbar-actions">
             <a className="secondary-btn" href="/sample-transactions.csv" download>Sample CSV</a>
-            <a className="primary-btn" href="/app">Open app</a>
+            {!user && <a className="primary-btn" href="/app">Open app</a>}
           </div>
         </div>
       </header>
-      {isAppRoute ? <AppWorkspace /> : <LandingPage />}
+      {isAppRoute ? (authReady && user ? <AppWorkspace /> : <LoginGate />) : user ? <AppWorkspace /> : <LandingPage />}
     </div>
   )
 }
