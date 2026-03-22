@@ -47,7 +47,7 @@ const emptyDraft: DraftTransaction = {
   merchant: '',
   memo: '',
   amount: '',
-  source: 'Imported Source',
+  source: 'Corporate Card',
   status: 'needs review',
   matchedDocs: '0',
   note: '',
@@ -75,9 +75,9 @@ function App() {
   const [view, setView] = useState<ViewMode>(getInitialView())
   const [items, setItems] = useState<Transaction[]>(initial ?? seedTransactions)
   const [selectedStatus, setSelectedStatus] = useState<Status | 'all'>('all')
-  const [selectedId, setSelectedId] = useState((initial ?? seedTransactions)[0].id)
+  const [selectedId, setSelectedId] = useState((initial ?? seedTransactions)[0]?.id ?? '')
   const [search, setSearch] = useState('')
-  const [noteDraft, setNoteDraft] = useState((initial ?? seedTransactions)[0].note)
+  const [noteDraft, setNoteDraft] = useState((initial ?? seedTransactions)[0]?.note ?? '')
   const [user, setUser] = useState<User | null>(null)
   const [cloudMessage, setCloudMessage] = useState('')
   const [saving, setSaving] = useState(false)
@@ -116,7 +116,7 @@ function App() {
             setSelectedId(cloudItems[0].id)
             setCloudMessage(`Loaded ${cloudItems.length} transactions from cloud.`)
           } else {
-            setCloudMessage('Signed in. Your cloud workspace is empty for now.')
+            setCloudMessage('Signed in. Start by importing a CSV or adding a transaction.')
           }
         } catch (error) {
           const message = error instanceof Error ? error.message : 'Unknown cloud load error'
@@ -190,21 +190,13 @@ function App() {
     const text = await file.text()
     const parsed = parseCsvTransactions(text)
     if (!parsed.length) {
-      setCloudMessage('No valid transactions were found in that CSV.')
+      setCloudMessage('No valid transactions were found in that CSV. Use columns like date, merchant, memo, amount, source, status.')
       return
     }
     setItems((current) => [...parsed, ...current])
     setSelectedId(parsed[0].id)
     setView('app')
     setCloudMessage(`Imported ${parsed.length} transactions from CSV.`)
-  }
-
-  function resetDemo() {
-    setItems(seedTransactions)
-    setSelectedId(seedTransactions[0].id)
-    setSearch('')
-    setSelectedStatus('all')
-    setCloudMessage('Demo workspace reset.')
   }
 
   async function signInWithGoogle() {
@@ -217,7 +209,6 @@ function App() {
         await signInWithRedirect(firebaseAuth, googleProvider)
         return
       }
-
       await signInWithPopup(firebaseAuth, googleProvider)
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Google sign-in failed'
@@ -326,19 +317,19 @@ function App() {
         <main className="page-shell">
           <section className="hero-section clean-hero">
             <div className="hero-copy">
-              <span className="eyebrow">For bookkeepers and small finance teams</span>
-              <h1>Keep unresolved reconciliation work from turning into month-end chaos.</h1>
+              <span className="eyebrow">Start with a statement export or card CSV</span>
+              <h1>Turn raw transactions into a clean list of unresolved items.</h1>
               <p className="hero-text">
-                Recon Workspace helps you review transactions, track missing support, and keep exception follow-up in one clean place before close gets messy.
+                Import a statement export, review what is matched or missing support, and leave month-end with a short list of exceptions instead of a spreadsheet mess.
               </p>
               <div className="hero-actions">
                 <button className="primary-btn" onClick={() => { window.location.hash = 'app'; setView('app') }}>Open the app <ArrowRight size={16} /></button>
-                <a className="secondary-btn" href="mailto:hello@reconworkspace.app?subject=Recon%20Workspace%20interest">Request early access</a>
+                <a className="secondary-btn" href="#workflow">See the workflow</a>
               </div>
-              <div className="hero-points">
-                <span><CheckCircle2 size={16} /> catch missing docs earlier</span>
-                <span><CheckCircle2 size={16} /> keep unresolved items visible</span>
-                <span><CheckCircle2 size={16} /> reduce spreadsheet cleanup</span>
+              <div className="hero-points compact-points">
+                <span><CheckCircle2 size={16} /> import CSV from your statement export</span>
+                <span><CheckCircle2 size={16} /> label missing docs and exceptions</span>
+                <span><CheckCircle2 size={16} /> export unresolved follow-up items</span>
               </div>
             </div>
             <div className="hero-summary">
@@ -349,18 +340,33 @@ function App() {
             </div>
           </section>
 
+          <section className="workflow-strip" id="workflow">
+            <div className="workflow-step">
+              <strong>1. Import</strong>
+              <p>Upload a CSV export from your bank, card, or accounting workflow.</p>
+            </div>
+            <div className="workflow-step">
+              <strong>2. Review</strong>
+              <p>Mark items as matched, missing docs, needs review, or exception.</p>
+            </div>
+            <div className="workflow-step">
+              <strong>3. Follow up</strong>
+              <p>Export unresolved items and keep notes attached to the transaction.</p>
+            </div>
+          </section>
+
           <section className="info-grid" id="benefits">
             <div className="info-block">
-              <h3>See unresolved items early</h3>
-              <p>Surface missing support and open exceptions before the end of the month instead of finding them too late.</p>
+              <h3>Designed around unresolved work</h3>
+              <p>Focus on the items that still need support, clarification, or follow-up instead of treating reconciliation like a giant spreadsheet.</p>
             </div>
             <div className="info-block">
-              <h3>Keep context attached to the transaction</h3>
-              <p>Notes, status, and follow-up stay with the transaction instead of getting buried in spreadsheets and inbox threads.</p>
+              <h3>Faster time to value</h3>
+              <p>Import a file, review statuses, and get an actionable unresolved list in minutes.</p>
             </div>
             <div className="info-block">
-              <h3>Make follow-up cleaner</h3>
-              <p>Export unresolved items, review what still blocks close, and keep everyone aligned on what needs action.</p>
+              <h3>Built for small teams</h3>
+              <p>Recon Workspace sits between manual spreadsheet cleanup and heavyweight enterprise close software.</p>
             </div>
           </section>
 
@@ -370,15 +376,15 @@ function App() {
               <ul>
                 <li>Bookkeepers handling multiple clients</li>
                 <li>Small finance teams with messy month-end prep</li>
-                <li>Operators who need better reconciliation visibility</li>
+                <li>Operators reviewing bank and card activity before close</li>
               </ul>
             </div>
             <div className="who-block">
-              <h3>Where teams lose time</h3>
+              <h3>Typical inputs</h3>
               <ul>
-                <li>Missing receipts discovered too late</li>
-                <li>Unclear transactions buried in notes</li>
-                <li>Follow-up split across tools</li>
+                <li>Bank statement CSV exports</li>
+                <li>Corporate card transaction exports</li>
+                <li>Manual transaction entries from unclear activity</li>
               </ul>
             </div>
           </section>
@@ -386,8 +392,8 @@ function App() {
           <section className="cta-section minimal">
             <div className="cta-card simple">
               <span className="eyebrow">Early access</span>
-              <h2>Want a cleaner way to get unresolved items off your plate?</h2>
-              <p>Try the app, or reach out if you want early access and product updates.</p>
+              <h2>Use the app, then tell us what still slows down close.</h2>
+              <p>This product is aimed at the messy middle: after statement export, before your books feel clean.</p>
               <div className="hero-actions compact">
                 <button className="primary-btn" onClick={() => { window.location.hash = 'app'; setView('app') }}>Open the app</button>
                 <a className="secondary-btn" href="mailto:hello@reconworkspace.app?subject=Recon%20Workspace%20interest">Contact</a>
@@ -397,7 +403,7 @@ function App() {
         </main>
       ) : (
         <main className="workspace-shell">
-          <section className="workspace-header">
+          <section className="workspace-header dense">
             <div>
               <span className="eyebrow">Workspace</span>
               <h1>Reconciliation workspace</h1>
@@ -410,12 +416,21 @@ function App() {
                 <input ref={fileInputRef} type="file" accept=".csv,text/csv" onChange={handleCsvUpload} hidden />
               </label>
               <button className="secondary-btn" onClick={() => downloadTextFile('unresolved-items.txt', unresolvedText)}><Download size={15} /> Export unresolved</button>
-              <button className="secondary-btn" onClick={resetDemo}>Reset demo</button>
               <button className="primary-btn" onClick={saveToCloud} disabled={saving || !cloudEnabled}><Save size={16} /> {saving ? 'Saving…' : 'Save'}</button>
             </div>
           </section>
 
-          <section className="status-banner">
+          <section className="entry-banner">
+            <div className="entry-copy">
+              <strong>How to use this</strong>
+              <span>Start by importing a CSV export from your bank statement or corporate card. Then mark missing docs, exceptions, and review items.</span>
+            </div>
+            {!user && cloudEnabled && (
+              <button className="secondary-btn" onClick={signInWithGoogle}><LogIn size={16} /> Sign in with Google</button>
+            )}
+          </section>
+
+          <section className="status-banner slim">
             <div>
               <strong>
                 {cloudEnabled
@@ -431,41 +446,32 @@ function App() {
                     (cloudEnabled
                       ? user
                         ? 'Your workspace is ready to save across devices.'
-                        : 'Sign in to keep your reconciliation workspace synced. If login fails, check Google provider and authorized domain settings in Firebase Auth.'
+                        : 'Sign in to keep your reconciliation workspace synced.'
                       : 'Cloud save will be available once the hosted environment is fully configured.')}
               </span>
             </div>
-            {!user && cloudEnabled && (
-              <button className="primary-btn" onClick={signInWithGoogle}><LogIn size={16} /> Sign in with Google</button>
-            )}
           </section>
 
           {showAddForm && (
-            <section className="add-form">
-              <div className="form-row two">
+            <section className="add-form dense-form">
+              <div className="form-row three">
                 <label>
                   <span>Date</span>
                   <input type="date" value={draft.date} onChange={(e) => setDraft((d) => ({ ...d, date: e.target.value }))} />
+                </label>
+                <label>
+                  <span>Merchant</span>
+                  <input value={draft.merchant} onChange={(e) => setDraft((d) => ({ ...d, merchant: e.target.value }))} placeholder="Vendor or merchant" />
                 </label>
                 <label>
                   <span>Amount</span>
                   <input type="number" step="0.01" value={draft.amount} onChange={(e) => setDraft((d) => ({ ...d, amount: e.target.value }))} placeholder="-125.00" />
                 </label>
               </div>
-              <div className="form-row two">
-                <label>
-                  <span>Merchant</span>
-                  <input value={draft.merchant} onChange={(e) => setDraft((d) => ({ ...d, merchant: e.target.value }))} placeholder="Vendor or merchant" />
-                </label>
+              <div className="form-row three">
                 <label>
                   <span>Source</span>
-                  <input value={draft.source} onChange={(e) => setDraft((d) => ({ ...d, source: e.target.value }))} placeholder="Operating Bank / Corporate Card" />
-                </label>
-              </div>
-              <div className="form-row two">
-                <label>
-                  <span>Memo</span>
-                  <input value={draft.memo} onChange={(e) => setDraft((d) => ({ ...d, memo: e.target.value }))} placeholder="Memo" />
+                  <input value={draft.source} onChange={(e) => setDraft((d) => ({ ...d, source: e.target.value }))} placeholder="Corporate Card" />
                 </label>
                 <label>
                   <span>Status</span>
@@ -473,10 +479,14 @@ function App() {
                     {statusOrder.map((status) => <option key={status} value={status}>{status}</option>)}
                   </select>
                 </label>
+                <label>
+                  <span>Memo</span>
+                  <input value={draft.memo} onChange={(e) => setDraft((d) => ({ ...d, memo: e.target.value }))} placeholder="Memo" />
+                </label>
               </div>
               <label>
                 <span>Note</span>
-                <textarea rows={3} value={draft.note} onChange={(e) => setDraft((d) => ({ ...d, note: e.target.value }))} placeholder="Why this item needs review, docs, or follow-up" />
+                <textarea rows={2} value={draft.note} onChange={(e) => setDraft((d) => ({ ...d, note: e.target.value }))} placeholder="What still needs to happen?" />
               </label>
               <div className="form-actions">
                 <button className="primary-btn" onClick={handleCreateTransaction}><FilePlus2 size={16} /> Add transaction</button>
@@ -485,7 +495,7 @@ function App() {
             </section>
           )}
 
-          <section className="summary-grid">
+          <section className="summary-grid compact-summary">
             <div className="summary-box"><span>Total</span><strong>{stats.total}</strong></div>
             <div className="summary-box"><span>Matched</span><strong>{stats.matched}</strong></div>
             <div className="summary-box"><span>Missing docs</span><strong>{stats.missingDocs}</strong></div>
@@ -493,9 +503,9 @@ function App() {
           </section>
 
           {isEmpty ? (
-            <section className="empty-state">
-              <h2>Your workspace is empty</h2>
-              <p>Add a transaction manually or import a CSV to start reviewing unresolved reconciliation work.</p>
+            <section className="empty-state compact-empty">
+              <h2>No transactions yet</h2>
+              <p>Import a CSV from a statement export or add a transaction manually to start reviewing unresolved reconciliation work.</p>
               <div className="hero-actions compact">
                 <button className="primary-btn" onClick={() => setShowAddForm(true)}><Plus size={16} /> Add first transaction</button>
                 <label className="secondary-btn clickable">
@@ -505,9 +515,9 @@ function App() {
               </div>
             </section>
           ) : (
-            <section className="workspace-grid">
-              <aside className="panel sidebar">
-                <h3>Status views</h3>
+            <section className="workspace-grid dense-grid">
+              <aside className="panel sidebar narrow">
+                <h3>Status</h3>
                 <button className={selectedStatus === 'all' ? 'status-link active' : 'status-link'} onClick={() => setSelectedStatus('all')}>
                   All items <span>{items.length}</span>
                 </button>
@@ -522,20 +532,19 @@ function App() {
                     <span>{items.filter((t) => t.status === status).length}</span>
                   </button>
                 ))}
-                <div className="sidebar-note">
-                  Resolve exceptions early so month-end close is mostly review, not cleanup.
-                </div>
               </aside>
 
-              <div className="panel table-panel">
-                <div className="searchbar">
-                  <Search size={16} />
-                  <input
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    placeholder="Search merchant, memo, source, or note"
-                  />
-                  <Filter size={16} />
+              <div className="panel table-panel wide">
+                <div className="table-toolbar">
+                  <div className="searchbar compact-search">
+                    <Search size={16} />
+                    <input
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                      placeholder="Search merchant, memo, source, or note"
+                    />
+                    <Filter size={16} />
+                  </div>
                 </div>
                 <div className="table-head row">
                   <span>Date</span>
@@ -567,20 +576,20 @@ function App() {
               <aside className="panel detail-panel">
                 {selected ? (
                   <>
-                    <div className="detail-top">
+                    <div className="detail-top compact-detail-top">
                       <span className={`badge ${statusTone[selected.status]}`}>{selected.status}</span>
                       <h3>{selected.merchant}</h3>
                       <p>{selected.memo}</p>
                     </div>
-                    <dl className="detail-grid">
+                    <dl className="detail-grid compact-detail-grid">
                       <div><dt>Date</dt><dd>{selected.date}</dd></div>
                       <div><dt>Source</dt><dd>{selected.source}</dd></div>
                       <div><dt>Amount</dt><dd>{currency(selected.amount)}</dd></div>
-                      <div><dt>Attached docs</dt><dd>{selected.matchedDocs}</dd></div>
+                      <div><dt>Docs</dt><dd>{selected.matchedDocs}</dd></div>
                     </dl>
                     <div className="detail-block">
-                      <h4>Update status</h4>
-                      <div className="status-actions">
+                      <h4>Status</h4>
+                      <div className="status-actions wrap-tight">
                         {statusOrder.map((status) => (
                           <button
                             key={status}
@@ -596,8 +605,8 @@ function App() {
                       </div>
                     </div>
                     <div className="detail-block">
-                      <h4>Bookkeeper note</h4>
-                      <textarea value={noteDraft} onChange={(e) => setNoteDraft(e.target.value)} rows={4} />
+                      <h4>Note</h4>
+                      <textarea value={noteDraft} onChange={(e) => setNoteDraft(e.target.value)} rows={3} />
                       <div className="detail-actions">
                         <button className="primary-btn small" onClick={handleNoteSave}>Save note</button>
                         <button className="secondary-btn small" onClick={() => {
@@ -608,7 +617,7 @@ function App() {
                       </div>
                     </div>
                     <div className="detail-block">
-                      <h4>Suggested next action</h4>
+                      <h4>Next action</h4>
                       <p>
                         {selected.status === 'missing docs'
                           ? 'Request receipt and business purpose, then keep item unresolved until attached.'
@@ -620,7 +629,7 @@ function App() {
                       </p>
                     </div>
                     <div className="detail-block">
-                      <h4>Activity log</h4>
+                      <h4>Activity</h4>
                       <ul className="activity-list">
                         {selected.activity.map((item) => (
                           <li key={item.at + item.text}>
