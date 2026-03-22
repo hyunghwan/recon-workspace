@@ -13,7 +13,7 @@ This repository contains:
 - product docs in `/docs`
 - a React + TypeScript MVP UI
 - demo mode without login
-- cloud-ready auth/DB scaffolding for Supabase + Google login
+- cloud-ready auth/DB scaffolding for Firebase + Google login
 - a Vercel-ready front-end build
 
 ## Docs
@@ -23,8 +23,8 @@ This repository contains:
 - `docs/architecture.md`
 - `docs/content-marketing.md`
 - `docs/seo-article-month-end-close.md`
-- `docs/supabase-setup.md`
-- `docs/supabase-schema.sql`
+- `docs/firebase-setup.md`
+- `docs/firebase-hosting-note.md`
 
 ## Local development
 ```bash

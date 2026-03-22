@@ -126,6 +126,7 @@ a { color: inherit; text-decoration: none; }
 }
 .auth-state strong { display: block; margin-bottom: 6px; }
 .auth-state span, .cloud-message { color: #9fb0c7; line-height: 1.5; }
+.auth-state.subtle { background: rgba(255,255,255,0.025); }
 .hero-actions.compact { margin-top: 0; }
 
 .hero-card-header {

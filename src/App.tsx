@@ -15,10 +15,12 @@ import {
   ShieldCheck,
   Upload,
 } from 'lucide-react'
+import { onAuthStateChanged, signInWithPopup, signOut, type User } from 'firebase/auth'
 import './App.css'
 import { statusOrder, transactions as seedTransactions, type Status, type Transaction } from './data'
+import { firebaseAuth, googleProvider, isFirebaseConfigured } from './firebase'
+import { loadWorkspaceTransactions, saveWorkspaceTransactions } from './firestore'
 import { loadTransactions, saveTransactions } from './storage'
-import { isSupabaseConfigured, supabase } from './supabase'
 import { currency, parseCsvTransactions, unresolvedSummary } from './utils'
 
 const statusTone: Record<Status, string> = {
@@ -48,9 +50,10 @@ function App() {
   const [selectedId, setSelectedId] = useState((initial ?? seedTransactions)[0].id)
   const [search, setSearch] = useState('')
   const [noteDraft, setNoteDraft] = useState((initial ?? seedTransactions)[0].note)
-  const [sessionEmail, setSessionEmail] = useState<string | null>(null)
+  const [user, setUser] = useState<User | null>(null)
   const [cloudMessage, setCloudMessage] = useState('')
   const [saving, setSaving] = useState(false)
+  const [loadingCloud, setLoadingCloud] = useState(false)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
 
   useEffect(() => {
@@ -58,17 +61,30 @@ function App() {
   }, [items])
 
   useEffect(() => {
-    if (!supabase) return
+    if (!firebaseAuth) return
 
-    supabase.auth.getSession().then(({ data }) => {
-      setSessionEmail(data.session?.user?.email ?? null)
+    const unsub = onAuthStateChanged(firebaseAuth, async (nextUser) => {
+      setUser(nextUser)
+
+      if (nextUser) {
+        try {
+          setLoadingCloud(true)
+          const cloudItems = await loadWorkspaceTransactions(nextUser.uid)
+          if (cloudItems.length) {
+            setItems(cloudItems)
+            setSelectedId(cloudItems[0].id)
+            setCloudMessage(`Loaded ${cloudItems.length} transactions from cloud.`)
+          }
+        } catch (error) {
+          const message = error instanceof Error ? error.message : 'Unknown cloud load error'
+          setCloudMessage(`Cloud load error: ${message}`)
+        } finally {
+          setLoadingCloud(false)
+        }
+      }
     })
 
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSessionEmail(session?.user?.email ?? null)
-    })
-
-    return () => listener.subscription.unsubscribe()
+    return () => unsub()
   }, [])
 
   const filtered = useMemo(() => {
@@ -129,102 +145,42 @@ function App() {
   }
 
   async function signInWithGoogle() {
-    if (!supabase) return
-    await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: window.location.origin,
-      },
-    })
+    if (!firebaseAuth || !googleProvider) return
+    await signInWithPopup(firebaseAuth, googleProvider)
   }
 
-  async function signOut() {
-    if (!supabase) return
-    await supabase.auth.signOut()
+  async function handleSignOut() {
+    if (!firebaseAuth) return
+    await signOut(firebaseAuth)
     setCloudMessage('Signed out.')
   }
 
   async function saveToCloud() {
-    if (!supabase) {
-      setCloudMessage('Supabase is not configured yet. Add env vars to enable cloud save.')
+    if (!isFirebaseConfigured) {
+      setCloudMessage('Firebase is not configured yet. Add env vars to enable cloud save.')
       return
     }
 
-    const {
-      data: { session },
-    } = await supabase.auth.getSession()
-
-    if (!session) {
+    if (!user) {
       setCloudMessage('Please sign in with Google first.')
       return
     }
 
-    setSaving(true)
-    setCloudMessage('')
-
-    const userId = session.user.id
-
-    const { data: existingWorkspace, error: workspaceError } = await supabase
-      .from('workspaces')
-      .select('id,name,owner_user_id')
-      .eq('owner_user_id', userId)
-      .limit(1)
-      .maybeSingle()
-
-    if (workspaceError) {
+    try {
+      setSaving(true)
+      setCloudMessage('')
+      await saveWorkspaceTransactions(user.uid, items)
+      setCloudMessage(`Saved ${items.length} transactions to cloud.`)
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown cloud save error'
+      setCloudMessage(`Cloud save error: ${message}`)
+    } finally {
       setSaving(false)
-      setCloudMessage(`Workspace error: ${workspaceError.message}`)
-      return
     }
-
-    let workspaceId = existingWorkspace?.id
-
-    if (!workspaceId) {
-      const { data: createdWorkspace, error: createWorkspaceError } = await supabase
-        .from('workspaces')
-        .insert({ owner_user_id: userId, name: 'Default Workspace' })
-        .select('id')
-        .single()
-
-      if (createWorkspaceError || !createdWorkspace) {
-        setSaving(false)
-        setCloudMessage(`Create workspace error: ${createWorkspaceError?.message ?? 'Unknown error'}`)
-        return
-      }
-
-      workspaceId = createdWorkspace.id
-    }
-
-    const rows = items.map((item) => ({
-      id: item.id,
-      workspace_id: workspaceId,
-      user_id: userId,
-      date: item.date,
-      merchant: item.merchant,
-      memo: item.memo,
-      amount: item.amount,
-      source: item.source,
-      status: item.status,
-      matched_docs: item.matchedDocs,
-      note: item.note,
-      activity: item.activity,
-      updated_at: new Date().toISOString(),
-    }))
-
-    const { error: upsertError } = await supabase.from('transactions').upsert(rows)
-
-    setSaving(false)
-
-    if (upsertError) {
-      setCloudMessage(`Cloud save error: ${upsertError.message}`)
-      return
-    }
-
-    setCloudMessage(`Saved ${rows.length} transactions to cloud.`)
   }
 
   const unresolvedText = unresolvedSummary(items)
-  const cloudEnabled = isSupabaseConfigured
+  const cloudEnabled = isFirebaseConfigured
 
   return (
     <div className="page-shell">
@@ -259,18 +215,36 @@ function App() {
               <span>Keep every transaction in a clear status, add notes in context, and export unresolved items when it’s time to follow up.</span>
             </div>
             <div className="hero-actions compact">
-              {cloudEnabled && !sessionEmail && (
+              {cloudEnabled && !user && (
                 <button className="primary-btn" onClick={signInWithGoogle}><LogIn size={16} /> Continue with Google</button>
               )}
-              {cloudEnabled && sessionEmail && (
+              {cloudEnabled && user && (
                 <>
                   <button className="primary-btn" onClick={saveToCloud} disabled={saving}><Save size={16} /> {saving ? 'Saving…' : 'Save workspace'}</button>
-                  <button className="secondary-btn" onClick={signOut}><LogOut size={16} /> Sign out</button>
+                  <button className="secondary-btn" onClick={handleSignOut}><LogOut size={16} /> Sign out</button>
                 </>
               )}
               {!cloudEnabled && <a className="secondary-btn" href="#demo">Explore the workspace</a>}
             </div>
-            {cloudMessage && <p className="cloud-message">{cloudMessage}</p>}
+            <div className="auth-state subtle">
+              <strong>
+                {cloudEnabled
+                  ? user
+                    ? `Signed in as ${user.email ?? 'Google user'}`
+                    : 'Google sign-in available'
+                  : 'Firebase config needed'}
+              </strong>
+              <span>
+                {loadingCloud
+                  ? 'Loading cloud workspace…'
+                  : cloudMessage ||
+                    (cloudEnabled
+                      ? user
+                        ? 'Cloud save is ready.'
+                        : 'Sign in to save your workspace across devices.'
+                      : 'Add Firebase env vars to enable login, database, and hosting flow.')}
+              </span>
+            </div>
           </div>
         </div>
       </section>
