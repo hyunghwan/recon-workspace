@@ -10,7 +10,7 @@ tags:
 keywords:
   - bookkeeping workflow
   - reconciliation process
-coverImage: /blog/images/your-post-slug.png
+coverImage: /blog/images/your-post-slug.jpg
 coverImageAlt: A short, descriptive sentence explaining the article hero image.
 draft: true
 ---

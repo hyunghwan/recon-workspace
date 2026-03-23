@@ -13,7 +13,7 @@ keywords:
   - bookkeeping month-end checklist
   - reconciliation prep
   - unresolved transactions
-coverImage: /blog/images/small-bookkeeping-teams-speed-up-month-end-close.png
+coverImage: /blog/images/small-bookkeeping-teams-speed-up-month-end-close.jpg
 coverImageAlt: An editorial desk scene with bank statements, support files, and a tidy reconciliation workspace ready for month-end review.
 draft: false
 ---

@@ -32,7 +32,7 @@ marked.use({
 })
 
 export function getSiteOrigin({ strict = false } = {}) {
-  const raw = process.env.SITE_ORIGIN?.trim()
+  const raw = resolveSiteOriginEnv()
 
   if (!raw) {
     if (strict) {
@@ -53,6 +53,23 @@ export function getSiteOrigin({ strict = false } = {}) {
   }
 
   return parsed.origin
+}
+
+function resolveSiteOriginEnv() {
+  const direct = process.env.SITE_ORIGIN?.trim()
+  if (direct) return direct
+
+  const vercelUrl = process.env.VERCEL_URL?.trim()
+  if (vercelUrl) {
+    return vercelUrl.startsWith('http') ? vercelUrl : `https://${vercelUrl}`
+  }
+
+  const vercelProductionUrl = process.env.VERCEL_PROJECT_PRODUCTION_URL?.trim()
+  if (vercelProductionUrl) {
+    return vercelProductionUrl.startsWith('http') ? vercelProductionUrl : `https://${vercelProductionUrl}`
+  }
+
+  return ''
 }
 
 export async function loadPosts({ includeDrafts = false } = {}) {

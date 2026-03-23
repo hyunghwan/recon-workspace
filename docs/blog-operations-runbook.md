@@ -31,7 +31,7 @@ Use this runbook to keep the Recon Workspace blog publishing consistently withou
 
 ## Image generation workflow
 - Skill: [`$imagegen`](imagegen skill)
-- Output path: `public/blog/images/<slug>.png`
+- Output path: `public/blog/images/<slug>.jpg`
 - Use a landscape size such as `1536x1024`
 - Keep the image text-free, brand-free, and editorial
 

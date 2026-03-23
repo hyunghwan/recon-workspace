@@ -13,7 +13,7 @@ keywords:
   - bookkeeper receipt follow up
   - month-end missing docs
   - client document requests
-coverImage: /blog/images/missing-receipt-workflow-for-bookkeepers-during-month-end-close.png
+coverImage: /blog/images/missing-receipt-workflow-for-bookkeepers-during-month-end-close.jpg
 coverImageAlt: A calm office scene showing a transaction review desk with receipt folders, follow-up notes, and a structured month-end workflow.
 draft: false
 ---

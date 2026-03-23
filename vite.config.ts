@@ -1,20 +1,37 @@
+import type { IncomingMessage, ServerResponse } from 'node:http'
 import tailwindcss from '@tailwindcss/vite'
-import { getSiteOrigin, loadPosts, renderBlogIndex, renderPostPage } from './scripts/blog-lib.mjs'
 import { fileURLToPath, URL } from 'node:url'
 import { defineConfig } from 'vite'
+import type { Plugin, ViteDevServer } from 'vite'
 import react from '@vitejs/plugin-react'
 
-function blogDevPlugin() {
+type BlogPost = {
+  slug: string
+}
+
+type NextHandle = (err?: unknown) => void
+
+const blogLibModulePath = fileURLToPath(new URL('./scripts/blog-lib.mjs', import.meta.url))
+
+function blogDevPlugin(): Plugin {
   return {
     name: 'recon-blog-dev-plugin',
     apply: 'serve',
-    configureServer(server) {
-      server.middlewares.use(async (req, res, next) => {
+    configureServer(server: ViteDevServer) {
+      server.middlewares.use(async (req: IncomingMessage, res: ServerResponse, next: NextHandle) => {
         if (req.method !== 'GET' && req.method !== 'HEAD') {
           next()
           return
         }
 
+        const { getSiteOrigin, loadPosts, renderBlogIndex, renderPostPage } = (await import(
+          blogLibModulePath
+        )) as {
+          getSiteOrigin: () => string
+          loadPosts: () => Promise<BlogPost[]>
+          renderBlogIndex: (posts: BlogPost[], siteOrigin: string) => string
+          renderPostPage: (post: BlogPost, posts: BlogPost[], siteOrigin: string) => string
+        }
         const requestPath = req.url?.split('?')[0] ?? '/'
 
         if (requestPath === '/blog' || requestPath === '/blog/') {
@@ -33,7 +50,7 @@ function blogDevPlugin() {
 
         const siteOrigin = req.headers.host ? `http://${req.headers.host}` : getSiteOrigin()
         const posts = await loadPosts()
-        const post = posts.find((entry) => entry.slug === match[1])
+        const post = posts.find((entry: BlogPost) => entry.slug === match[1])
 
         if (!post) {
           res.statusCode = 404

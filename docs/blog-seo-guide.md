@@ -45,7 +45,7 @@
 
 ## Image rules
 - Every post needs exactly 1 hero image
-- Store image files in `public/blog/images/<slug>.*`
+- Store image files in `public/blog/images/<slug>.jpg`
 - Use the same image for the article hero and social preview
 - Images should be editorial, calm, and text-free
 - Preferred framing: wide landscape composition that leaves room for cropping

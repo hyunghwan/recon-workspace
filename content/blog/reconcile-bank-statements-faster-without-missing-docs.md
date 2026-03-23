@@ -13,7 +13,7 @@ keywords:
   - bank reconciliation workflow
   - missing supporting documents
   - bookkeeping support files
-coverImage: /blog/images/reconcile-bank-statements-faster-without-missing-docs.png
+coverImage: /blog/images/reconcile-bank-statements-faster-without-missing-docs.jpg
 coverImageAlt: A bookkeeper desk with organized bank statements, supporting documents, and a calm review setup with natural light.
 draft: false
 ---
