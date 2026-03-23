@@ -1,0 +1,3 @@
+date,description,counterparty,amount,payout_id,group_key
+2026-03-06,Shopify gross payout 49822,Shopify,8563.72,49822,payout-49822
+2026-03-06,Returns adjustment payout 49822,Shopify,-142.10,49822,payout-49822

@@ -1,0 +1,5 @@
+date,description,vendor,amount,invoice_number,note
+2026-03-03,Adobe annual invoice,Adobe,659.88,adobe-2026,One-to-one exact support
+2026-03-04,Delta client travel receipt,Delta Air Lines,438.21,,Ambiguous candidate one
+2026-03-05,Delta backup travel receipt,Delta Air Lines,438.21,,Ambiguous candidate two
+2026-03-08,Petty cash replenishment,Cash Withdrawal,280,,Near match that becomes exception

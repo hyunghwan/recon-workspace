@@ -7,8 +7,28 @@ service cloud.firestore {
       match /workspaces/{workspaceId} {
         allow read, write: if request.auth != null && request.auth.uid == userId;
 
-        match /transactions/{transactionId} {
+        match /periods/{periodId} {
           allow read, write: if request.auth != null && request.auth.uid == userId;
+
+          match /imports/{importId} {
+            allow read, write: if request.auth != null && request.auth.uid == userId;
+          }
+
+          match /records/{recordId} {
+            allow read, write: if request.auth != null && request.auth.uid == userId;
+          }
+
+          match /matches/{matchId} {
+            allow read, write: if request.auth != null && request.auth.uid == userId;
+          }
+
+          match /annotations/{recordId} {
+            allow read, write: if request.auth != null && request.auth.uid == userId;
+          }
+
+          match /manualOverrides/{overrideId} {
+            allow read, write: if request.auth != null && request.auth.uid == userId;
+          }
         }
       }
     }
