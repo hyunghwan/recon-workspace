@@ -25,6 +25,8 @@ This repository contains:
 - `docs/architecture.md`
 - `docs/content-marketing.md`
 - `docs/seo-article-month-end-close.md`
+- `docs/blog-seo-guide.md`
+- `docs/blog-operations-runbook.md`
 - `docs/firebase-setup.md`
 - `docs/firebase-hosting-note.md`
 
@@ -43,8 +45,11 @@ VITE_FIREBASE_APPCHECK_DEBUG=true
 
 ## Production build
 ```bash
+SITE_ORIGIN=https://your-domain.com
 pnpm build
 ```
+
+The blog build validates Markdown content, renders static pages into `dist/blog/`, and generates `sitemap.xml`, `rss.xml`, and `robots.txt`.
 
 ## Deployment
 This app is designed to deploy directly to Vercel as a static React/Vite project.

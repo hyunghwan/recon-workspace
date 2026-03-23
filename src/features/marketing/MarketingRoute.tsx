@@ -61,6 +61,9 @@ export default function MarketingRoute() {
               />
 
               <div className="flex flex-wrap gap-2">
+                <Button asChild variant="ghost" className="rounded-xl text-muted-foreground">
+                  <a href="/blog/">Blog</a>
+                </Button>
                 <Button
                   variant="ghost"
                   className="rounded-xl text-muted-foreground"

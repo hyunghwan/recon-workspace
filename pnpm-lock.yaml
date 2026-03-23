@@ -32,6 +32,9 @@ importers:
       lucide-react:
         specifier: ^0.577.0
         version: 0.577.0(react@19.2.4)
+      marked:
+        specifier: ^17.0.5
+        version: 17.0.5
       radix-ui:
         specifier: ^1.4.3
         version: 1.4.3(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -53,6 +56,9 @@ importers:
       tw-animate-css:
         specifier: ^1.4.0
         version: 1.4.0
+      yaml:
+        specifier: ^2.8.3
+        version: 2.8.3
     devDependencies:
       '@eslint/js':
         specifier: ^9.39.4
@@ -3709,6 +3715,11 @@ packages:
   marked@13.0.3:
     resolution: {integrity: sha512-rqRix3/TWzE9rIoFGIn8JmsVfhiuC8VIQ8IdX5TfzmeBucdY05/0UlzKaw0eVtpcN/OdVFpBk7CjKGo9iHJ/zA==}
     engines: {node: '>= 18'}
+    hasBin: true
+
+  marked@17.0.5:
+    resolution: {integrity: sha512-6hLvc0/JEbRjRgzI6wnT2P1XuM1/RrrDEX0kPt0N7jGm1133g6X7DlxFasUIx+72aKAr904GTxhSLDrd5DIlZg==}
+    engines: {node: '>= 20'}
     hasBin: true
 
   math-intrinsics@1.1.0:
@@ -9221,6 +9232,8 @@ snapshots:
       supports-hyperlinks: 3.2.0
 
   marked@13.0.3: {}
+
+  marked@17.0.5: {}
 
   math-intrinsics@1.1.0: {}
 

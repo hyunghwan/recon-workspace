@@ -6,7 +6,9 @@
   "packageManager": "pnpm@10.26.0",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "node scripts/blog-check.mjs && tsc -b && vite build && node scripts/blog-render.mjs",
+    "blog:check": "node scripts/blog-check.mjs",
+    "blog:render": "node scripts/blog-render.mjs",
     "lint": "eslint .",
     "preview": "vite preview"
   },
@@ -19,13 +21,15 @@
     "firebase": "^12.11.0",
     "firebase-tools": "^15.11.0",
     "lucide-react": "^0.577.0",
+    "marked": "^17.0.5",
     "radix-ui": "^1.4.3",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "react-router-dom": "^7.13.1",
     "shadcn": "^4.1.0",
     "tailwind-merge": "^3.5.0",
-    "tw-animate-css": "^1.4.0"
+    "tw-animate-css": "^1.4.0",
+    "yaml": "^2.8.3"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",
