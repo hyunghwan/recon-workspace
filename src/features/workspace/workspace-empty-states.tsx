@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import { ArrowRight } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
+import { ReconMark } from '@/components/brand/ReconBrand'
 import { Button } from '@/components/ui/button'
 
 type EmptyStateAction = {
@@ -36,8 +37,17 @@ export function WorkspaceChecklistState({
   tertiaryAction?: EmptyStateAction
 }) {
   return (
-    <section className="grid gap-6 border border-[#dde4e1] bg-[#f8faf9] p-6 lg:grid-cols-[minmax(0,0.92fr)_320px]">
+    <section className="grid gap-6 border border-[#dde4e1] bg-[#f8faf9] p-6 lg:min-h-full lg:grid-cols-[minmax(0,0.92fr)_320px]">
       <div className="space-y-4">
+        <div className="inline-flex items-center gap-3 rounded-[22px] border border-[#dbe7e2] bg-white/90 px-3.5 py-3 shadow-[0_18px_40px_-28px_rgba(21,59,53,0.35)]">
+          <ReconMark className="h-10 w-10" alt="" />
+          <div className="min-w-0">
+            <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-[#5f7670]">
+              Recon Workspace
+            </p>
+            <p className="text-sm tracking-tight text-[#173f39]">Keep the month-end flow steady from upload to follow-up.</p>
+          </div>
+        </div>
         <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-[#5f7670]">
           {eyebrow}
         </p>

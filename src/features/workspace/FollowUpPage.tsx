@@ -92,7 +92,7 @@ export default function FollowUpPage() {
   }
 
   return (
-    <div className="overflow-hidden border border-[#dde4e1] bg-white">
+    <div className="overflow-hidden border border-[#dde4e1] bg-white lg:flex lg:min-h-0 lg:flex-1 lg:flex-col xl:h-full">
       <div className="flex flex-col gap-4 border-b border-[#e5ece9] px-5 py-5 xl:flex-row xl:items-end xl:justify-between">
         <div className="space-y-2">
           <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-[#617a73]">
@@ -129,8 +129,8 @@ export default function FollowUpPage() {
         </div>
       </div>
 
-      <div className="grid xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
-        <section className="min-w-0">
+      <div className="grid xl:min-h-0 xl:flex-1 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
+        <section className="min-w-0 xl:min-h-0 xl:overflow-y-auto">
           <div className="border-b border-[#e5ece9] px-5 py-4">
             <p className="text-sm leading-6 text-[#617a73]">
               Only the transactions that still need follow-up are included here, so the handoff stays focused and easier to explain.
@@ -159,14 +159,14 @@ export default function FollowUpPage() {
           </div>
         </section>
 
-        <section className="border-t border-[#e5ece9] bg-[#fbfcfb] xl:border-l xl:border-t-0">
+        <section className="border-t border-[#e5ece9] bg-[#fbfcfb] xl:flex xl:min-h-0 xl:flex-col xl:border-l xl:border-t-0">
           <div className="border-b border-[#e5ece9] px-5 py-4">
             <h3 className="text-sm font-medium tracking-tight text-[#102d28]">Follow-up draft</h3>
             <p className="mt-1 text-sm leading-6 text-[#617a73]">
               Review the text below before you export or paste it into your email thread.
             </p>
           </div>
-          <ScrollArea className="h-[34rem]">
+          <ScrollArea className="xl:min-h-0 xl:flex-1">
             <div className="px-5 py-5">
               <pre className="whitespace-pre-wrap text-sm leading-6 text-foreground">{followUpSummary}</pre>
             </div>

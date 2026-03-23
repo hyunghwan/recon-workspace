@@ -10,6 +10,7 @@ import {
   type GoogleSignInMode,
 } from '@/auth'
 import { useAuthSession } from '@/auth/auth-session'
+import { ReconLockup, ReconMark } from '@/components/brand/ReconBrand'
 import { Button } from '@/components/ui/button'
 
 export default function MarketingRoute() {
@@ -52,15 +53,12 @@ export default function MarketingRoute() {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col gap-4 py-4">
             <div className="flex items-center justify-between gap-4">
-              <div className="inline-flex items-center gap-3">
-                <div className="flex size-11 items-center justify-center rounded-2xl bg-[#153b35] text-sm font-semibold tracking-tight text-white">
-                  R
-                </div>
-                <div>
-                  <p className="text-sm font-medium tracking-tight text-foreground">Recon Workspace</p>
-                  <p className="text-xs text-muted-foreground">Reconciliation prep for month-end close</p>
-                </div>
-              </div>
+              <ReconLockup
+                subtitle="Reconciliation prep for month-end close"
+                markClassName="h-11 w-11"
+                titleClassName="text-sm text-foreground"
+                subtitleClassName="text-xs text-muted-foreground"
+              />
 
               <div className="flex flex-wrap gap-2">
                 <Button
@@ -88,6 +86,16 @@ export default function MarketingRoute() {
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
         <section className="space-y-8 border-b border-[#dde5e2] pb-14 lg:space-y-10 lg:pb-16">
           <div className="max-w-3xl space-y-6">
+            <div className="inline-flex items-center gap-3 rounded-full border border-[#d8e3df] bg-white/85 px-3 py-2 shadow-[0_18px_40px_-28px_rgba(21,59,53,0.35)]">
+              <ReconMark className="h-9 w-9" alt="" />
+              <div className="min-w-0">
+                <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-[#5f7670]">
+                  Recon mark
+                </p>
+                <p className="text-sm tracking-tight text-[#173f39]">A tighter single-mark direction for close work.</p>
+              </div>
+            </div>
+
             <p className="text-[11px] font-medium uppercase tracking-[0.2em] text-[#5f7670]">
               For bookkeepers and small finance teams
             </p>

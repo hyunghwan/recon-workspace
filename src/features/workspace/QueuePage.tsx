@@ -153,8 +153,8 @@ export default function QueuePage() {
   }
 
   return (
-    <div className="overflow-hidden border border-[#dde4e1] bg-white xl:grid xl:grid-cols-[minmax(0,1.24fr)_390px]">
-      <section className="min-w-0">
+    <div className="overflow-hidden border border-[#dde4e1] bg-white lg:flex-1 lg:min-h-0 xl:grid xl:h-full xl:grid-cols-[minmax(0,1.24fr)_390px]">
+      <section className="min-w-0 xl:min-h-0 xl:overflow-y-auto">
         <div className="grid gap-px border-b border-[#e5ece9] bg-[#e5ece9] sm:grid-cols-2 xl:grid-cols-5">
           <SummaryMetric
             active={queueView === 'ambiguous'}

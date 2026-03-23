@@ -42,8 +42,8 @@ export default function ImportsPage() {
   const fileInputRef = useRef<HTMLInputElement | null>(null)
 
   return (
-    <div className="grid gap-4 xl:grid-cols-[minmax(0,0.86fr)_minmax(0,1.14fr)]">
-      <section className="overflow-hidden border border-[#dde4e1] bg-white">
+    <div className="grid gap-4 lg:flex-1 lg:min-h-0 xl:h-full xl:grid-cols-[minmax(0,0.86fr)_minmax(0,1.14fr)]">
+      <section className="overflow-hidden border border-[#dde4e1] bg-white xl:min-h-0 xl:overflow-y-auto">
         <div className="space-y-3 border-b border-[#e5ece9] px-5 py-5">
           <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-[#617a73]">
             Files {'->'} Review
@@ -201,7 +201,7 @@ export default function ImportsPage() {
         </div>
       </section>
 
-      <section className="overflow-hidden border border-[#dde4e1] bg-white">
+      <section className="overflow-hidden border border-[#dde4e1] bg-white xl:flex xl:min-h-0 xl:flex-col">
         <div className="flex flex-col gap-3 border-b border-[#e5ece9] px-5 py-5 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h2 className="text-lg font-semibold tracking-tight text-[#102d28]">Files in this month</h2>
@@ -215,7 +215,7 @@ export default function ImportsPage() {
         </div>
 
         {!currentPeriodBundle?.imports.length ? (
-          <div className="p-5">
+          <div className="p-5 xl:flex-1 xl:min-h-0">
             <WorkspaceChecklistState
               eyebrow="No files yet"
               title="This month is ready for its first upload."
@@ -249,33 +249,35 @@ export default function ImportsPage() {
             />
           </div>
         ) : (
-          <Table>
-            <TableHeader>
-              <TableRow className="border-slate-200">
-                <TableHead className="px-4">File</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Project</TableHead>
-                <TableHead>Account</TableHead>
-                <TableHead>Rows</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {currentPeriodBundle.imports.map((item) => (
-                <TableRow key={item.id} className="border-slate-200/90">
-                  <TableCell className="px-4 whitespace-normal">
-                    <div className="space-y-1">
-                      <p className="font-medium tracking-tight text-foreground">{item.fileName}</p>
-                      <p className="text-sm text-muted-foreground">{new Date(item.uploadedAt).toLocaleString()}</p>
-                    </div>
-                  </TableCell>
-                  <TableCell><SourceBadge sourceType={item.sourceType} /></TableCell>
-                  <TableCell className="text-muted-foreground">{item.projectKey}</TableCell>
-                  <TableCell className="text-muted-foreground">{item.accountKey}</TableCell>
-                  <TableCell>{item.rowCount}</TableCell>
+          <div className="xl:min-h-0 xl:flex-1 xl:overflow-y-auto">
+            <Table>
+              <TableHeader>
+                <TableRow className="border-slate-200">
+                  <TableHead className="px-4">File</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Project</TableHead>
+                  <TableHead>Account</TableHead>
+                  <TableHead>Rows</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {currentPeriodBundle.imports.map((item) => (
+                  <TableRow key={item.id} className="border-slate-200/90">
+                    <TableCell className="px-4 whitespace-normal">
+                      <div className="space-y-1">
+                        <p className="font-medium tracking-tight text-foreground">{item.fileName}</p>
+                        <p className="text-sm text-muted-foreground">{new Date(item.uploadedAt).toLocaleString()}</p>
+                      </div>
+                    </TableCell>
+                    <TableCell><SourceBadge sourceType={item.sourceType} /></TableCell>
+                    <TableCell className="text-muted-foreground">{item.projectKey}</TableCell>
+                    <TableCell className="text-muted-foreground">{item.accountKey}</TableCell>
+                    <TableCell>{item.rowCount}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         )}
       </section>
     </div>

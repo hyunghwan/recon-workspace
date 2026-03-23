@@ -81,7 +81,7 @@ export function MatchDetailPanel({
 
   if (!row || !periodBundle) {
     return (
-      <aside className="border-t border-[#e5ece9] bg-[#fbfcfb] xl:border-l xl:border-t-0">
+      <aside className="border-t border-[#e5ece9] bg-[#fbfcfb] xl:min-h-0 xl:overflow-y-auto xl:border-l xl:border-t-0">
         <div className="space-y-3 px-5 py-5">
           <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-[#617a73]">
             Selected transaction
@@ -100,7 +100,7 @@ export function MatchDetailPanel({
   const primaryRecordId = row.primaryRecord?.id ?? row.relatedRecords[0]?.id ?? null
 
   return (
-    <aside className="border-t border-[#e5ece9] bg-[#fbfcfb] motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-right-2 motion-reduce:animate-none xl:border-l xl:border-t-0">
+    <aside className="border-t border-[#e5ece9] bg-[#fbfcfb] motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-right-2 motion-reduce:animate-none xl:min-h-0 xl:overflow-y-auto xl:border-l xl:border-t-0">
       <div className="space-y-6 px-5 py-5">
         <div className="space-y-3">
           <div className="flex flex-wrap items-center gap-2">

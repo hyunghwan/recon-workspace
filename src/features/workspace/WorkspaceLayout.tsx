@@ -14,6 +14,7 @@ import {
 } from 'lucide-react'
 import { Link, NavLink, Outlet } from 'react-router-dom'
 
+import { ReconLockup } from '@/components/brand/ReconBrand'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -87,19 +88,18 @@ export default function WorkspaceLayout() {
         : 'Transactions that still need attention'
 
   return (
-    <div className="min-h-screen bg-[#eff3f2] text-foreground">
-      <div className="grid min-h-screen lg:grid-cols-[288px_minmax(0,1fr)]">
-        <aside className="border-b border-[#dbe3e0] bg-[#f7f9f8] lg:border-b-0 lg:border-r">
-          <div className="flex h-full flex-col gap-5 px-4 py-4 sm:px-6 lg:px-5 lg:py-5">
+    <div className="min-h-screen bg-[#eff3f2] text-foreground lg:h-dvh lg:overflow-hidden">
+      <div className="grid min-h-screen lg:h-full lg:min-h-0 lg:grid-cols-[288px_minmax(0,1fr)]">
+        <aside className="border-b border-[#dbe3e0] bg-[#f7f9f8] lg:min-h-0 lg:overflow-y-auto lg:border-b-0 lg:border-r">
+          <div className="flex flex-col gap-5 px-4 py-4 sm:px-6 lg:min-h-full lg:px-5 lg:py-5">
             <div className="space-y-4">
-              <Link to="/" className="inline-flex items-center gap-3">
-                <div className="flex size-11 items-center justify-center rounded-2xl bg-[#153b35] text-sm font-semibold tracking-tight text-white">
-                  R
-                </div>
-                <div>
-                  <p className="text-sm font-medium tracking-tight text-foreground">Recon Workspace</p>
-                  <p className="text-xs text-muted-foreground">A cleaner month-end review workspace</p>
-                </div>
+              <Link to="/" className="inline-flex">
+                <ReconLockup
+                  subtitle="A cleaner month-end review workspace"
+                  markClassName="h-11 w-11"
+                  titleClassName="text-sm text-foreground"
+                  subtitleClassName="text-xs text-muted-foreground"
+                />
               </Link>
 
               <section className="space-y-4">
@@ -357,8 +357,8 @@ export default function WorkspaceLayout() {
           </div>
         </aside>
 
-        <div className="flex min-h-screen flex-col">
-          <header className="border-b border-[#dbe3e0] bg-[#f7f9f8]/92 backdrop-blur-xl">
+        <div className="min-w-0 flex min-h-screen flex-col lg:grid lg:h-full lg:min-h-0 lg:grid-rows-[auto_minmax(0,1fr)]">
+          <header className="border-b border-[#dbe3e0] bg-[#f7f9f8]/92 backdrop-blur-xl lg:sticky lg:top-0 lg:z-20 lg:shrink-0">
             <div className="flex flex-col gap-4 px-4 py-4 sm:px-6 lg:flex-row lg:items-end lg:justify-between lg:px-8">
               <div className="space-y-2">
                 <div className="flex flex-wrap items-center gap-2 text-[11px] font-medium uppercase tracking-[0.16em] text-[#68817a]">
@@ -454,8 +454,10 @@ export default function WorkspaceLayout() {
             </div>
           </header>
 
-          <main className="flex-1 px-4 py-4 sm:px-6 lg:px-8 lg:py-6">
-            <Outlet />
+          <main className="flex-1 px-4 py-4 sm:px-6 lg:flex lg:min-h-0 lg:flex-col lg:overflow-y-auto lg:px-8 lg:py-6 xl:overflow-hidden">
+            <div className="flex min-h-0 flex-1 flex-col">
+              <Outlet />
+            </div>
           </main>
         </div>
       </div>

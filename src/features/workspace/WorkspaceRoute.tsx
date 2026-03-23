@@ -1,5 +1,6 @@
 import { Navigate, Outlet, Route, Routes } from 'react-router-dom'
 
+import { ReconLockup } from '@/components/brand/ReconBrand'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import FollowUpPage from './FollowUpPage'
 import ImportsPage from './ImportsPage'
@@ -76,7 +77,13 @@ function WorkspaceLoadingState() {
   return (
     <div className="flex min-h-[40vh] items-center justify-center">
       <Card className="w-full max-w-md border border-white/70 bg-white/90 shadow-[0_20px_60px_-36px_rgba(15,23,42,0.45)]">
-        <CardHeader>
+        <CardHeader className="space-y-4">
+          <ReconLockup
+            subtitle="Loading the right client and month before review opens."
+            markClassName="h-12 w-12"
+            titleClassName="text-base font-semibold text-[#102d28]"
+            subtitleClassName="text-sm text-[#617a73]"
+          />
           <CardTitle>Opening your month</CardTitle>
           <CardDescription>
             Loading the right client and month before opening the review list.
