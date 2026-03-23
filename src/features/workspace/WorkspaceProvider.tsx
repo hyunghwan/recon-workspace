@@ -21,6 +21,7 @@ import {
   deletePeriodBundle,
   deleteRecordAnnotation,
   deleteWorkspaceBundle,
+  isImportUploadError,
   loadReconSnapshot,
   replaceManualOverrides,
   savePeriodBundle,
@@ -631,6 +632,12 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         () => savePeriodBundle(user.uid, currentWorkspace.workspace.id, nextPeriodBundle),
       )
     } catch (error) {
+      if (isImportUploadError(error)) {
+        console.error('Import upload failed', error.diagnostics)
+        setCloudMessage(error.message)
+        return
+      }
+
       const message = error instanceof Error ? error.message : 'Unknown import error'
       setCloudMessage(`Import error: ${message}`)
     } finally {

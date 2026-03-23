@@ -34,6 +34,13 @@ pnpm install
 pnpm dev
 ```
 
+If Cloud Storage App Check enforcement is enabled for the Firebase project, also set:
+
+```bash
+VITE_FIREBASE_APPCHECK_SITE_KEY=
+VITE_FIREBASE_APPCHECK_DEBUG=true
+```
+
 ## Production build
 ```bash
 pnpm build
@@ -45,13 +52,19 @@ This app is designed to deploy directly to Vercel as a static React/Vite project
 Firebase artifacts can be deployed with:
 
 ```bash
-FIREBASE_SKIP_UPDATE_CHECK=true pnpm exec firebase deploy --only firestore:rules,firestore:indexes --project your-firebase-project-id
+npx -y firebase-tools@latest deploy --only firestore:rules,firestore:indexes --project your-firebase-project-id
 ```
 
 If Firebase Storage has already been initialized for the project, deploy storage rules too:
 
 ```bash
-FIREBASE_SKIP_UPDATE_CHECK=true pnpm exec firebase deploy --only firestore:rules,firestore:indexes,storage --project your-firebase-project-id
+npx -y firebase-tools@latest deploy --only firestore:rules,firestore:indexes,storage --project your-firebase-project-id
 ```
 
 For Google sign-in, use the Firebase Auth helper domain in `VITE_FIREBASE_AUTH_DOMAIN` (for this project: `your-firebase-project-id.firebaseapp.com`) unless you have explicitly configured and whitelisted a different `__/auth/handler` redirect URI.
+
+If Firebase CLI management commands start failing with `Your credentials are no longer valid`, refresh them with:
+
+```bash
+npx -y firebase-tools@latest login --reauth
+```

@@ -16,7 +16,14 @@ import {
   type FirebaseStorage,
 } from 'firebase/storage'
 
-import { firestore, firebaseStorage } from './firebase'
+import {
+  firebaseStorage,
+  firebaseStorageBucket,
+  firestore,
+  isAppCheckConfigured,
+  isAppCheckDebugEnabled,
+  isAppCheckSiteKeyConfigured,
+} from './firebase'
 import type {
   ImportBatchRecord,
   ManualMatchOverride,
@@ -32,6 +39,59 @@ import type {
 
 type FirestorePayload = Record<string, unknown>
 
+export type ImportUploadFailureReason =
+  | 'app-check-required'
+  | 'bucket-misconfigured'
+  | 'network'
+  | 'unauthenticated'
+  | 'unauthorized'
+  | 'unknown'
+
+export type ImportUploadDiagnostics = {
+  appCheckConfigured: boolean
+  appCheckDebugEnabled: boolean
+  appCheckSiteKeyConfigured: boolean
+  bucket: string | null
+  firebaseCode: string | null
+  importId: string
+  message: string
+  periodId: string
+  reason: ImportUploadFailureReason
+  serverResponse: string | null
+  stage: 'download-url' | 'upload'
+  status: number | null
+  storagePath: string
+  userId: string
+  workspaceId: string
+}
+
+type FirebaseStorageLikeError = Error & {
+  code?: string
+  serverResponse?: string
+  status?: number
+}
+
+type ImportUploadContext = {
+  importId: string
+  periodId: string
+  stage: 'download-url' | 'upload'
+  storagePath: string
+  userId: string
+  workspaceId: string
+}
+
+export class ImportUploadError extends Error {
+  readonly diagnostics: ImportUploadDiagnostics
+  readonly reason: ImportUploadFailureReason
+
+  constructor(message: string, reason: ImportUploadFailureReason, diagnostics: ImportUploadDiagnostics) {
+    super(message)
+    this.name = 'ImportUploadError'
+    this.reason = reason
+    this.diagnostics = diagnostics
+  }
+}
+
 function requireFirestore(): Firestore {
   if (!firestore) throw new Error('Firebase Firestore is not configured.')
   return firestore
@@ -40,6 +100,120 @@ function requireFirestore(): Firestore {
 function requireStorage(): FirebaseStorage {
   if (!firebaseStorage) throw new Error('Firebase Storage is not configured.')
   return firebaseStorage
+}
+
+function trimToNull(value: unknown) {
+  if (typeof value !== 'string') return null
+  const normalized = value.trim()
+  return normalized ? normalized : null
+}
+
+function resolveImportUploadFailureReason(error: FirebaseStorageLikeError): ImportUploadFailureReason {
+  const code = trimToNull(error.code)?.toLowerCase()
+  const message = trimToNull(error.message)?.toLowerCase() ?? ''
+  const serverResponse = trimToNull(error.serverResponse)?.toLowerCase() ?? ''
+  const combined = `${code ?? ''} ${message} ${serverResponse}`
+
+  if (
+    code === 'storage/unauthorized-app' ||
+    combined.includes('firebase app check token is invalid') ||
+    combined.includes('app check')
+  ) {
+    return 'app-check-required'
+  }
+
+  if (code === 'storage/unauthenticated') {
+    return 'unauthenticated'
+  }
+
+  if (code === 'storage/unauthorized') {
+    return 'unauthorized'
+  }
+
+  if (
+    combined.includes('firebase storage is not configured') ||
+    combined.includes('storagebucket') ||
+    error.status === 404 ||
+    (code === 'storage/unknown' && combined.includes('not found'))
+  ) {
+    return 'bucket-misconfigured'
+  }
+
+  if (
+    code === 'storage/retry-limit-exceeded' ||
+    error.status === 0 ||
+    combined.includes('err_failed') ||
+    combined.includes('network error') ||
+    combined.includes('failed to fetch') ||
+    combined.includes('network request failed')
+  ) {
+    return 'network'
+  }
+
+  return 'unknown'
+}
+
+function describeImportUploadFailure(
+  reason: ImportUploadFailureReason,
+  diagnostics: Omit<ImportUploadDiagnostics, 'reason'>,
+) {
+  switch (reason) {
+    case 'unauthenticated':
+      return 'Upload failed because your Firebase session is no longer authenticated. Sign out, sign back in, and try the import again.'
+    case 'unauthorized':
+      return 'Upload reached Firebase Storage but was denied by Storage rules. Confirm the signed-in account owns this workspace and redeploy `storage.rules` if needed.'
+    case 'app-check-required':
+      return diagnostics.appCheckSiteKeyConfigured
+        ? 'Upload was rejected by Firebase App Check. Check the browser console for the App Check token status and confirm the deployed site key is allowed for this domain.'
+        : 'Upload was rejected by Firebase App Check. Add `VITE_FIREBASE_APPCHECK_SITE_KEY`, and set `VITE_FIREBASE_APPCHECK_DEBUG=true` locally if Cloud Storage enforcement is enabled.'
+    case 'bucket-misconfigured':
+      return 'Upload could not reach the configured Firebase Storage bucket. Verify `VITE_FIREBASE_STORAGE_BUCKET` matches the live Firebase web app config and that the bucket exists.'
+    case 'network':
+      return 'Upload request never completed. Check browser extensions, privacy settings, VPN/proxy rules, or network filters that could block Firebase Storage.'
+    default:
+      return 'Firebase Storage upload failed. Check the browser console diagnostics for the Firebase error code and server response.'
+  }
+}
+
+function normalizeImportUploadError(error: unknown, context: ImportUploadContext) {
+  if (error instanceof ImportUploadError) {
+    return error
+  }
+
+  const storageError: FirebaseStorageLikeError =
+    error instanceof Error
+      ? (error as FirebaseStorageLikeError)
+      : (new Error('Unknown upload error') as FirebaseStorageLikeError)
+  const reason = resolveImportUploadFailureReason(storageError)
+  const diagnosticsBase = {
+    appCheckConfigured: isAppCheckConfigured,
+    appCheckDebugEnabled: isAppCheckDebugEnabled,
+    appCheckSiteKeyConfigured: isAppCheckSiteKeyConfigured,
+    bucket: firebaseStorageBucket,
+    firebaseCode: trimToNull(storageError.code),
+    importId: context.importId,
+    message: trimToNull(storageError.message) ?? 'Unknown upload error',
+    periodId: context.periodId,
+    serverResponse: trimToNull(storageError.serverResponse),
+    stage: context.stage,
+    status: typeof storageError.status === 'number' ? storageError.status : null,
+    storagePath: context.storagePath,
+    userId: context.userId,
+    workspaceId: context.workspaceId,
+  } satisfies Omit<ImportUploadDiagnostics, 'reason'>
+
+  return new ImportUploadError(
+    describeImportUploadFailure(reason, diagnosticsBase),
+    reason,
+    {
+      ...diagnosticsBase,
+      reason,
+    },
+  )
+}
+
+export function isImportUploadError(error: unknown): error is ImportUploadError {
+  return error instanceof ImportUploadError
 }
 
 function sanitizeForFirestore<T>(value: T): T {
@@ -356,17 +530,39 @@ export async function uploadImportFile(
   importId: string,
   file: File,
 ) {
-  const storage = requireStorage()
   const safeFileName = file.name.replace(/[^a-zA-Z0-9._-]+/g, '-')
   const storagePath = `users/${userId}/workspaces/${workspaceId}/periods/${periodId}/imports/${importId}/${safeFileName}`
-  const fileRef = ref(storage, storagePath)
-
-  await uploadBytes(fileRef, file, {
-    contentType: file.type || 'text/csv',
-  })
-
-  return {
+  const uploadContext = {
+    importId,
+    periodId,
     storagePath,
-    downloadUrl: await getDownloadURL(fileRef),
+    userId,
+    workspaceId,
+  }
+
+  try {
+    const storage = requireStorage()
+    const fileRef = ref(storage, storagePath)
+
+    await uploadBytes(fileRef, file, {
+      contentType: file.type || 'text/csv',
+    })
+
+    try {
+      return {
+        storagePath,
+        downloadUrl: await getDownloadURL(fileRef),
+      }
+    } catch (error) {
+      throw normalizeImportUploadError(error, {
+        ...uploadContext,
+        stage: 'download-url',
+      })
+    }
+  } catch (error) {
+    throw normalizeImportUploadError(error, {
+      ...uploadContext,
+      stage: 'upload',
+    })
   }
 }
