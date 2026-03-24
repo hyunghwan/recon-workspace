@@ -36,6 +36,8 @@ import {
 } from '@/firestore'
 import { saveSnapshot } from '@/storage'
 import type {
+  ImportBatchUploadItem,
+  ImportBatchUploadResult,
   ImportFormState,
   ManualMatchOverride,
   PeriodBundle,
@@ -52,7 +54,6 @@ import {
   formatMonthLabel,
   parseImportFile,
   rebuildPeriodBundle,
-  sourceTypeLabel,
 } from '@/utils'
 import { WorkspaceContext, type WorkspaceContextValue } from './workspace-context'
 import {
@@ -214,6 +215,29 @@ function removeDeletedImportReferences(periodBundle: PeriodBundle, deletedRecord
   }
 }
 
+function formatBatchCount(count: number, noun: string) {
+  return `${count} ${noun}${count === 1 ? '' : 's'}`
+}
+
+function buildImportBatchMessage(results: ImportBatchUploadResult[]) {
+  const importedCount = results.filter((result) => result.status === 'imported').length
+  const duplicateCount = results.filter((result) => result.status === 'duplicate_skipped').length
+  const failedCount = results.filter((result) => result.status === 'failed').length
+  const messageParts: string[] = []
+
+  if (importedCount > 0) {
+    messageParts.push(`Uploaded ${formatBatchCount(importedCount, 'file')}.`)
+  }
+  if (duplicateCount > 0) {
+    messageParts.push(`Skipped ${formatBatchCount(duplicateCount, 'duplicate')}.`)
+  }
+  if (failedCount > 0) {
+    messageParts.push(`${formatBatchCount(failedCount, 'file')} failed.`)
+  }
+
+  return messageParts.join(' ') || 'No files were uploaded.'
+}
+
 function buildSnapshotDefaultPath(snapshot: ReconSnapshot, page: AppPage = 'queue') {
   const defaultWorkspace = getPreferredWorkspaceBundle(snapshot)
   const defaultPeriod = defaultWorkspace?.periods[0]
@@ -284,7 +308,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
           setSnapshot(cloudSnapshot)
           setSelectedPeriodIdByWorkspace((current) => buildPeriodSelectionMap(cloudSnapshot, current))
           setCloudMessage(
-            `Loaded ${cloudSnapshot.workspaces.length} client ${cloudSnapshot.workspaces.length > 1 ? 'records' : 'record'} from your saved workspace.`,
+            `Loaded ${cloudSnapshot.workspaces.length} ${cloudSnapshot.workspaces.length > 1 ? 'clients' : 'client'} from your account.`,
           )
         } else if (shouldAutoSeedSampleWorkspace(cloudSnapshot, preferences)) {
           const sampleSeededAt = new Date().toISOString()
@@ -305,16 +329,16 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
           } catch (error) {
             if (cancelled) return
             const message = error instanceof Error ? error.message : 'Unknown sample onboarding error'
-            setCloudMessage(`Signed in, but the sample workspace could not be saved to your account: ${message}`)
+            setCloudMessage(`Signed in, but the sample client could not be saved to your account: ${message}`)
           }
         } else {
           setSnapshot(cloudSnapshot)
           setSelectedPeriodIdByWorkspace({})
-          setCloudMessage('Signed in. Create your first client workspace and month to start uploading your own files.')
+          setCloudMessage('Signed in. Create your first client and month to start uploading your own files.')
         }
       } catch (error) {
         const message = error instanceof Error ? error.message : 'Unknown cloud load error'
-        setCloudMessage(`Could not load your saved workspace: ${message}`)
+        setCloudMessage(`Could not load your saved client data: ${message}`)
       } finally {
         if (!cancelled) {
           setLoadingCloud(false)
@@ -421,7 +445,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     const importPath = buildCurrentPath('imports') ?? buildDefaultPath('imports')
     const currentPath = `${location.pathname}${location.search}${location.hash}`
 
-    setCloudMessage('Signed in. Choose a file type and upload the CSV for this month.')
+    setCloudMessage('Signed in. Confirm the client and month, then upload the CSV.')
 
     if (importPath && currentPath !== importPath) {
       navigate(importPath, { replace: true })
@@ -492,7 +516,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   function handleCreateWorkspace(name: string) {
     const trimmedName = name.trim()
     const ownerUserId = user?.uid ?? 'demo-user'
-    const nextBundle = createBlankWorkspaceBundle(trimmedName || 'New workspace', ownerUserId)
+    const nextBundle = createBlankWorkspaceBundle(trimmedName || 'New client', ownerUserId)
     const nextSnapshot = addWorkspaceBundle(snapshot, nextBundle)
     const nextPeriodId = nextBundle.periods[0]?.period.id ?? ''
 
@@ -503,7 +527,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     setShowNewWorkspaceForm(false)
     commitSnapshot(
       nextSnapshot,
-      `Created client workspace ${nextBundle.workspace.name}.`,
+      `Created client ${nextBundle.workspace.name}.`,
       user && cloudEnabled ? () => saveWorkspaceBundle(user.uid, nextBundle) : undefined,
     )
 
@@ -517,7 +541,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
 
     const trimmedName = name.trim()
     if (!trimmedName) {
-      setCloudMessage('Enter a workspace name before saving.')
+      setCloudMessage('Enter a client name before saving.')
       return
     }
 
@@ -534,7 +558,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
 
     commitSnapshot(
       nextSnapshot,
-      `Renamed workspace to ${trimmedName}.`,
+      `Renamed client to ${trimmedName}.`,
       user && cloudEnabled ? () => saveWorkspaceRecord(user.uid, nextWorkspaceRecord) : undefined,
     )
   }
@@ -547,7 +571,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
 
     commitSnapshot(
       nextSnapshot,
-      `Deleted workspace ${currentWorkspace.workspace.name}.`,
+      `Deleted client ${currentWorkspace.workspace.name}.`,
       user && cloudEnabled ? () => deleteWorkspaceBundle(user.uid, currentWorkspace.workspace.id) : undefined,
     )
     navigate(nextPath, { replace: true })
@@ -605,80 +629,125 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     navigate(nextPath, { replace: true })
   }
 
-  async function handleImportBatch(input: { file: File | null; form: ImportFormState }) {
-    if (!currentWorkspace || !currentRawPeriodBundle || !input.file) {
-      setCloudMessage('Choose a client, month, and CSV before importing.')
-      return
+  async function handleImportBatch(input: { files: ImportBatchUploadItem[]; form: ImportFormState }) {
+    if (!currentWorkspace || !currentRawPeriodBundle || input.files.length === 0) {
+      setCloudMessage('Choose a client, month, and at least one CSV before uploading.')
+      return []
     }
 
     if (!cloudEnabled || !user) {
-      setCloudMessage('Sign in to upload original CSV files for this client month.')
-      return
+      setCloudMessage('Sign in to upload original CSV files for this client and month.')
+      return []
     }
+
+    const results: ImportBatchUploadResult[] = []
 
     try {
       setImporting(true)
-      const text = await input.file.text()
-      const parsedImport = await parseImportFile({
-        text,
-        fileName: input.file.name,
-        workspaceId: currentWorkspace.workspace.id,
-        periodId: currentRawPeriodBundle.period.id,
-        monthKey: currentRawPeriodBundle.period.monthKey,
-        sourceType: input.form.sourceType,
-        projectKey: input.form.projectKey,
-        accountKey: input.form.accountKey,
-        defaultCurrency: currentWorkspace.workspace.defaultCurrency,
-        existingImports: currentRawPeriodBundle.imports,
-      })
+      let workingPeriodBundle = currentRawPeriodBundle
 
-      if (parsedImport.duplicateOfImportId) {
-        setCloudMessage(`This CSV matches an existing upload for the month, so it was skipped.`)
-        return
+      for (const item of input.files) {
+        try {
+          const text = await item.file.text()
+          const parsedImport = await parseImportFile({
+            text,
+            fileName: item.file.name,
+            workspaceId: currentWorkspace.workspace.id,
+            periodId: workingPeriodBundle.period.id,
+            monthKey: workingPeriodBundle.period.monthKey,
+            sourceType: item.sourceType,
+            projectKey: input.form.projectKey,
+            accountKey: input.form.accountKey,
+            defaultCurrency: currentWorkspace.workspace.defaultCurrency,
+            existingImports: workingPeriodBundle.imports,
+          })
+
+          if (parsedImport.duplicateOfImportId) {
+            results.push({
+              id: item.id,
+              fileName: item.file.name,
+              sourceType: item.sourceType,
+              status: 'duplicate_skipped',
+              error: 'This CSV already exists for the selected month.',
+            })
+            continue
+          }
+
+          const uploaded = await uploadImportFile(
+            user.uid,
+            currentWorkspace.workspace.id,
+            workingPeriodBundle.period.id,
+            parsedImport.batch.id,
+            item.file,
+          )
+
+          const nextBatch = {
+            ...parsedImport.batch,
+            storagePath: uploaded.storagePath,
+          }
+          workingPeriodBundle = rebuildPeriodBundle(
+            workingPeriodBundle.period,
+            [nextBatch, ...workingPeriodBundle.imports],
+            [...workingPeriodBundle.records, ...parsedImport.records],
+            {
+              annotations: workingPeriodBundle.annotations,
+              manualOverrides: workingPeriodBundle.manualOverrides,
+            },
+          )
+          results.push({
+            id: item.id,
+            fileName: item.file.name,
+            sourceType: item.sourceType,
+            status: 'imported',
+            recordCount: parsedImport.records.length,
+          })
+        } catch (error) {
+          if (isImportUploadError(error)) {
+            console.error('Import upload failed', error.diagnostics)
+            results.push({
+              id: item.id,
+              fileName: item.file.name,
+              sourceType: item.sourceType,
+              status: 'failed',
+              error: error.message,
+            })
+            continue
+          }
+
+          const message = error instanceof Error ? error.message : 'Unknown import error'
+          results.push({
+            id: item.id,
+            fileName: item.file.name,
+            sourceType: item.sourceType,
+            status: 'failed',
+            error: message,
+          })
+        }
       }
 
-      const uploaded = await uploadImportFile(
-        user.uid,
-        currentWorkspace.workspace.id,
-        currentRawPeriodBundle.period.id,
-        parsedImport.batch.id,
-        input.file,
-      )
+      const importedCount = results.filter((result) => result.status === 'imported').length
+      if (importedCount > 0) {
+        const nextSnapshot = replacePeriodBundle(snapshot, currentWorkspace.workspace.id, workingPeriodBundle)
 
-      const nextBatch = {
-        ...parsedImport.batch,
-        storagePath: uploaded.storagePath,
+        setSelectedPeriodIdByWorkspace((current) => ({
+          ...current,
+          [currentWorkspace.workspace.id]: workingPeriodBundle.period.id,
+        }))
+
+        commitSnapshot(
+          nextSnapshot,
+          buildImportBatchMessage(results),
+          () => savePeriodBundle(user.uid, currentWorkspace.workspace.id, workingPeriodBundle),
+        )
+      } else {
+        setCloudMessage(buildImportBatchMessage(results))
       }
-      const nextPeriodBundle = rebuildPeriodBundle(
-        currentRawPeriodBundle.period,
-        [nextBatch, ...currentRawPeriodBundle.imports],
-        [...currentRawPeriodBundle.records, ...parsedImport.records],
-        {
-          annotations: currentRawPeriodBundle.annotations,
-          manualOverrides: currentRawPeriodBundle.manualOverrides,
-        },
-      )
-      const nextSnapshot = replacePeriodBundle(snapshot, currentWorkspace.workspace.id, nextPeriodBundle)
 
-      setSelectedPeriodIdByWorkspace((current) => ({
-        ...current,
-        [currentWorkspace.workspace.id]: nextPeriodBundle.period.id,
-      }))
-
-      commitSnapshot(
-        nextSnapshot,
-        `Imported ${parsedImport.records.length} ${sourceTypeLabel(input.form.sourceType).toLowerCase()} records from ${input.file.name}.`,
-        () => savePeriodBundle(user.uid, currentWorkspace.workspace.id, nextPeriodBundle),
-      )
+      return results
     } catch (error) {
-      if (isImportUploadError(error)) {
-        console.error('Import upload failed', error.diagnostics)
-        setCloudMessage(error.message)
-        return
-      }
-
       const message = error instanceof Error ? error.message : 'Unknown import error'
       setCloudMessage(`Could not finish the import: ${message}`)
+      return results
     } finally {
       setImporting(false)
     }
@@ -850,7 +919,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     }
 
     try {
-      setCloudMessage('Sign in to upload and keep the original CSV files with this month.')
+      setCloudMessage('Sign in to upload and keep the original CSV files with this client and month.')
       await beginGoogleSignIn({
         mode: 'import',
         returnTo: buildCurrentPath('imports') ?? `${location.pathname}${location.search}${location.hash}`,
@@ -867,7 +936,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     setShowNewPeriodForm(false)
     setShowNewWorkspaceForm(false)
     setUserPreferences({})
-    setCloudMessage('Signed out. Sign in again to open your workspace.')
+    setCloudMessage('Signed out. Sign in again to open your clients.')
     navigate('/app', { replace: true })
   }
 

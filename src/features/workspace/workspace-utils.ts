@@ -1,5 +1,4 @@
 import type {
-  ImportFormState,
   MatchProvenance,
   MatchResultRecord,
   NormalizedRecord,
@@ -27,12 +26,6 @@ export type QueueRow = {
   accountKeys: string[]
   sourceTypes: SourceType[]
   searchText: string
-}
-
-export const defaultImportForm: ImportFormState = {
-  sourceType: 'statement',
-  projectKey: 'month-end',
-  accountKey: 'operating-bank',
 }
 
 export function buildPeriodSelectionMap(snapshot: ReconSnapshot, previous: Record<string, string> = {}) {

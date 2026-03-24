@@ -1,6 +1,8 @@
 import type {
   ConfidenceBand,
   ImportBatchRecord,
+  ImportInferenceStatus,
+  ImportFormState,
   MatchCounts,
   MatchProvenance,
   MatchResultRecord,
@@ -59,6 +61,42 @@ const matchStatusLabelMap: Record<MatchStatus, string> = {
 export const sourceTypeOrder: SourceType[] = ['statement', 'payout', 'supporting_csv']
 
 export const matchStatusOrder: MatchStatus[] = ['ambiguous', 'unmatched', 'exception', 'matched']
+
+export function createDefaultImportForm(): ImportFormState {
+  return {
+    projectKey: '',
+    accountKey: '',
+  }
+}
+
+export function buildImportSelectionSummary(input: {
+  clientName: string
+  monthName: string
+  fileNames?: string[]
+}) {
+  const fileNames = input.fileNames?.filter(Boolean) ?? []
+  const fileValue =
+    fileNames.length === 0
+      ? 'No files selected'
+      : fileNames.length === 1
+        ? fileNames[0]
+        : `${fileNames.length} files queued`
+
+  return [
+    {
+      label: 'Client' as const,
+      value: input.clientName.trim() || 'Choose a client',
+    },
+    {
+      label: 'Month' as const,
+      value: input.monthName.trim() || 'Choose a month',
+    },
+    {
+      label: 'File' as const,
+      value: fileValue,
+    },
+  ]
+}
 
 export function emptySourceCounts(): SourceCounts {
   return {
@@ -124,6 +162,33 @@ export function normalizeText(value: string) {
 
 function normalizeHeader(value: string) {
   return normalizeText(value).replace(/\s+/g, '_')
+}
+
+function createSourceTypeScoreMap() {
+  return {
+    statement: 0,
+    payout: 0,
+    supporting_csv: 0,
+  } satisfies Record<SourceType, number>
+}
+
+function createSourceTypeReasonMap() {
+  return {
+    statement: [] as string[],
+    payout: [] as string[],
+    supporting_csv: [] as string[],
+  } satisfies Record<SourceType, string[]>
+}
+
+function addSourceTypeSignal(
+  scores: Record<SourceType, number>,
+  reasons: Record<SourceType, string[]>,
+  sourceType: SourceType,
+  value: number,
+  reason: string,
+) {
+  scores[sourceType] += value
+  reasons[sourceType].push(reason)
 }
 
 function isoNow() {
@@ -200,6 +265,87 @@ function buildHeaderMap(headerRow: string[]) {
   })
 
   return map
+}
+
+export function inferImportSourceType(input: {
+  fileName: string
+  text?: string
+}): {
+  inferredSourceType: SourceType | null
+  inferenceStatus: ImportInferenceStatus
+  inferenceReason: string
+} {
+  const scores = createSourceTypeScoreMap()
+  const reasons = createSourceTypeReasonMap()
+  const fileTokens = new Set(normalizeText(input.fileName.replace(/\.csv$/i, '')).split(' ').filter(Boolean))
+  const headerRow = input.text ? parseCsvRows(input.text)[0] ?? [] : []
+  const headers = new Set(headerRow.map((cell) => normalizeHeader(cell)).filter(Boolean))
+
+  if (headers.has('merchant')) {
+    addSourceTypeSignal(scores, reasons, 'statement', 4, 'merchant column')
+  }
+  if (headers.has('reference')) {
+    addSourceTypeSignal(scores, reasons, 'statement', 4, 'reference column')
+  }
+  if (headers.has('counterparty')) {
+    addSourceTypeSignal(scores, reasons, 'payout', 3, 'counterparty column')
+  }
+  if (headers.has('payout_id')) {
+    addSourceTypeSignal(scores, reasons, 'payout', 5, 'payout_id column')
+  }
+  if (headers.has('vendor')) {
+    addSourceTypeSignal(scores, reasons, 'supporting_csv', 4, 'vendor column')
+  }
+  if (headers.has('invoice_number')) {
+    addSourceTypeSignal(scores, reasons, 'supporting_csv', 5, 'invoice_number column')
+  }
+  if (headers.has('note')) {
+    addSourceTypeSignal(scores, reasons, 'supporting_csv', 2, 'note column')
+  }
+  if (headers.has('group_key')) {
+    addSourceTypeSignal(scores, reasons, 'statement', 1, 'group_key column')
+    addSourceTypeSignal(scores, reasons, 'payout', 1, 'group_key column')
+  }
+
+  if (fileTokens.has('statement') || fileTokens.has('bank')) {
+    addSourceTypeSignal(scores, reasons, 'statement', 3, 'statement file name')
+  }
+  if (fileTokens.has('payout') || fileTokens.has('settlement')) {
+    addSourceTypeSignal(scores, reasons, 'payout', 3, 'payout file name')
+  }
+  if (
+    fileTokens.has('supporting') ||
+    fileTokens.has('support') ||
+    fileTokens.has('invoice') ||
+    fileTokens.has('receipt') ||
+    fileTokens.has('bill')
+  ) {
+    addSourceTypeSignal(scores, reasons, 'supporting_csv', 3, 'supporting file name')
+  }
+
+  const ranked = sourceTypeOrder
+    .map((sourceType) => ({
+      sourceType,
+      score: scores[sourceType],
+      reasons: reasons[sourceType],
+    }))
+    .sort((left, right) => right.score - left.score)
+
+  const [top, next] = ranked
+
+  if (!top || top.score === 0 || (next && top.score - next.score < 2)) {
+    return {
+      inferredSourceType: null,
+      inferenceStatus: 'needs_review',
+      inferenceReason: 'Type needed',
+    }
+  }
+
+  return {
+    inferredSourceType: top.sourceType,
+    inferenceStatus: 'inferred',
+    inferenceReason: `Auto-detected from ${top.reasons[0] ?? 'file structure'}.`,
+  }
 }
 
 function readColumn(row: string[], headerMap: Map<string, number>, aliases: string[]) {

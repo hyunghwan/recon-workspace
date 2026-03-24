@@ -1,6 +1,8 @@
 import { createContext, useContext } from 'react'
 
 import type {
+  ImportBatchUploadItem,
+  ImportBatchUploadResult,
   ImportFormState,
   MatchCounts,
   PeriodBundle,
@@ -30,7 +32,7 @@ export type WorkspaceContextValue = {
   handleDeleteWorkspace: () => Promise<void>
   handleDirectSignIn: () => Promise<void>
   handleExportFollowUp: () => void
-  handleImportBatch: (input: { file: File | null; form: ImportFormState }) => Promise<void>
+  handleImportBatch: (input: { files: ImportBatchUploadItem[]; form: ImportFormState }) => Promise<ImportBatchUploadResult[]>
   handleImportSignIn: () => Promise<void>
   handleManualSave: () => Promise<void>
   handleManualMatch: (input: { note?: string; recordIds: string[] }) => Promise<void>

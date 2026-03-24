@@ -92,7 +92,7 @@ export default function WorkspaceLayout() {
             <div className="space-y-4">
               <Link to="/" className="inline-flex">
                 <ReconLockup
-                  subtitle="A cleaner month-end review workspace"
+                  subtitle="A cleaner month-end review flow"
                   markClassName="h-11 w-11"
                   titleClassName="text-sm text-foreground"
                   subtitleClassName="text-xs text-muted-foreground"
@@ -133,12 +133,12 @@ export default function WorkspaceLayout() {
                   {showNewWorkspaceForm && (
                     <div className="flex gap-2">
                       <Input
-                        aria-label="New client workspace name"
+                        aria-label="New client name"
                         autoComplete="off"
                         name="workspace-name"
                         value={newWorkspaceName}
                         onChange={(event) => setNewWorkspaceName(event.target.value)}
-                        placeholder="New client workspace..."
+                        placeholder="New client..."
                         className="rounded-lg border-[#dce4e1] bg-white shadow-none"
                       />
                       <Button
@@ -158,11 +158,11 @@ export default function WorkspaceLayout() {
                     <div className="space-y-2 border border-[#e2e8e5] bg-[#fafcfb] p-3">
                       <div className="flex items-center gap-2 text-xs uppercase tracking-[0.14em] text-muted-foreground">
                         <PencilLine className="size-3.5" />
-                        Workspace controls
+                        Client controls
                       </div>
                       <div className="flex gap-2">
                         <Input
-                          aria-label="Rename workspace"
+                          aria-label="Rename client"
                           autoComplete="off"
                           name="workspace-rename"
                           value={workspaceRenameValue}
@@ -172,7 +172,7 @@ export default function WorkspaceLayout() {
                               value: event.target.value,
                             })
                           }
-                          placeholder="Workspace name..."
+                          placeholder="Client name..."
                           className="rounded-lg border-[#dce4e1] bg-white shadow-none"
                         />
                         <Button
@@ -193,13 +193,13 @@ export default function WorkspaceLayout() {
                         variant="outline"
                         className="w-full rounded-lg border-[#ead7d7] bg-white text-[#8a3d3d] hover:bg-[#fff4f4]"
                         onClick={() => {
-                          const confirmed = window.confirm(`Delete workspace ${currentWorkspace.workspace.name}? This removes every month, file, and review state under it.`)
+                          const confirmed = window.confirm(`Delete client ${currentWorkspace.workspace.name}? This removes every month, file, and review state under it.`)
                           if (!confirmed) return
                           void handleDeleteWorkspace()
                         }}
                       >
                         <Trash2 />
-                        Delete workspace
+                        Delete client
                       </Button>
                     </div>
                   )}
@@ -329,7 +329,7 @@ export default function WorkspaceLayout() {
 
             <section className="mt-auto space-y-4 border border-[#e2e8e5] bg-white px-4 py-4">
               <div className="space-y-1">
-                <p className="text-sm font-medium tracking-tight text-[#102d28]">Current work record</p>
+                <p className="text-sm font-medium tracking-tight text-[#102d28]">Current selection</p>
                 <p className="text-xs leading-5 text-[#617a73]">
                   Pick a client first, choose the month you are closing, then move through files, review, and follow-up.
                 </p>
@@ -385,12 +385,12 @@ export default function WorkspaceLayout() {
                 <div className="flex flex-wrap gap-2">
                   {currentPage !== 'imports' && importPath && (
                     <Button asChild className="rounded-lg bg-[#173f39] text-white hover:bg-[#0f312b]">
-                      <NavLink to={importPath}>Import a CSV</NavLink>
+                      <NavLink to={importPath}>Upload a file</NavLink>
                     </Button>
                   )}
                   {currentPage !== 'imports' && !importPath && (
                     <Button className="rounded-lg bg-[#173f39] text-white hover:bg-[#173f39]" disabled>
-                      Import a CSV
+                      Upload a file
                     </Button>
                   )}
                   {currentPage !== 'imports' && (
@@ -445,7 +445,7 @@ export default function WorkspaceLayout() {
                       Sample data
                     </p>
                     <p className="text-sm leading-6 text-[#6f4a4a]">
-                      This workspace is here to show the product in context. Delete the sample data when you are ready to upload your own files.
+                      This sample client is here to show the product in context. Delete the sample data when you are ready to upload your own files.
                     </p>
                   </div>
                   <div className="flex flex-wrap gap-2">
@@ -454,16 +454,16 @@ export default function WorkspaceLayout() {
                       className="rounded-xl border-[#d8c5c5] bg-white"
                       onClick={() => {
                         setShowNewWorkspaceForm(true)
-                        setCloudMessage('Create your own client workspace, then delete the sample data when you are ready.')
+                        setCloudMessage('Create your own client, then delete the sample data when you are ready.')
                       }}
                     >
                       <FolderPlus />
-                      Create my workspace
+                      Create my client
                     </Button>
                     <Button
                       className="rounded-xl bg-[#9b3f3f] text-white hover:bg-[#842f2f]"
                       onClick={() => {
-                        const confirmed = window.confirm('Delete sample data? This removes the sample workspace and leaves only your own workspaces.')
+                        const confirmed = window.confirm('Delete sample data? This removes the sample client and leaves only your own clients.')
                         if (!confirmed) return
                         void handleDeleteSampleWorkspace()
                       }}

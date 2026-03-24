@@ -118,9 +118,9 @@ function WorkspaceSignInState({
             subtitleClassName="text-sm text-[#617a73]"
           />
           <div className="space-y-2">
-            <h1 className="text-2xl font-semibold tracking-tight text-[#102d28]">Sign in to open your workspace</h1>
+            <h1 className="text-2xl font-semibold tracking-tight text-[#102d28]">Sign in to open your clients</h1>
             <CardDescription className="text-sm leading-6">
-              New accounts start with a sample month inside the app so you can see the flow immediately. You can delete the sample data as soon as you are ready to upload your own files.
+              New accounts start with a sample client and month inside the app so you can see the flow immediately. You can delete the sample data as soon as you are ready to upload your own files.
             </CardDescription>
           </div>
         </CardHeader>
@@ -146,17 +146,17 @@ function WorkspaceBlankState() {
 
   return (
     <WorkspaceChecklistState
-      eyebrow="Your workspace is empty"
+      eyebrow="Your client list is empty"
       title="Start with one client and one close month."
-      description="Create the first client workspace, add the month you are closing, and then bring in the files you want to review."
+      description="Create the first client, add the month you are closing, and then bring in the files you want to review."
       primaryAction={{
-        label: 'Create client workspace',
+        label: 'Create client',
         onClick: () => setShowNewWorkspaceForm(true),
       }}
       steps={[
         {
-          title: 'Create a client workspace',
-          body: 'Give each client its own review space so the month-end work stays separated.',
+          title: 'Create a client',
+          body: 'Give each client its own file list and review trail so the month-end work stays separated.',
         },
         {
           title: 'Add the month you are closing',

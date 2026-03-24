@@ -18,6 +18,10 @@ export type ManualOverrideKind = 'manual_match' | 'manual_unmatch'
 
 export type MatchProvenance = 'engine' | 'manual_match' | 'manual_unmatch'
 
+export type ImportInferenceStatus = 'inferred' | 'needs_review'
+
+export type ImportUploadStatus = 'imported' | 'duplicate_skipped' | 'failed'
+
 export type WorkspaceOrigin = 'sample' | 'user'
 
 export type WorkspaceRecord = {
@@ -149,9 +153,33 @@ export type UserWorkspacePreferences = {
 }
 
 export type ImportFormState = {
-  sourceType: SourceType
   projectKey: string
   accountKey: string
+}
+
+export type QueuedImportFile = {
+  id: string
+  file: File
+  inferredSourceType: SourceType | null
+  resolvedSourceType: SourceType | null
+  inferenceStatus: ImportInferenceStatus
+  inferenceReason: string
+  error: string | null
+}
+
+export type ImportBatchUploadItem = {
+  id: string
+  file: File
+  sourceType: SourceType
+}
+
+export type ImportBatchUploadResult = {
+  id: string
+  fileName: string
+  sourceType: SourceType
+  status: ImportUploadStatus
+  recordCount?: number
+  error?: string | null
 }
 
 export type ParsedImport = {
