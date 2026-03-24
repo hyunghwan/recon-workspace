@@ -13,7 +13,7 @@ It focuses on the messy layer before the books are clean:
 This repository contains:
 - product docs in `/docs`
 - a React + TypeScript reconciliation UI
-- local sample workspaces and local persistence
+- authenticated sample onboarding plus Firebase-backed workspace persistence
 - Firebase Auth + Firestore + Storage integration for pilot users
 - sample CSV templates in `/public`
 - a Firebase Hosting-first front-end build
@@ -46,7 +46,7 @@ VITE_FIREBASE_APPCHECK_DEBUG=true
 
 ## Production build
 ```bash
-SITE_ORIGIN=https://your-firebase-project-id.web.app
+SITE_ORIGIN=https://reconcile.sqncs.com
 pnpm build
 ```
 
@@ -77,7 +77,7 @@ npx -y firebase-tools@latest deploy --only firestore:rules,firestore:indexes,sto
 ```
 
 For Google sign-in, use the Firebase Auth helper domain in `VITE_FIREBASE_AUTH_DOMAIN` (for this project: `your-firebase-project-id.firebaseapp.com`) unless you have explicitly configured and whitelisted a different `__/auth/handler` redirect URI.
-Confirm Firebase Authentication authorized domains include both `your-firebase-project-id.web.app` and `your-firebase-project-id.firebaseapp.com`.
+Confirm Firebase Authentication authorized domains include the canonical custom domain `reconcile.sqncs.com` and the Firebase Auth fallback `your-firebase-project-id.firebaseapp.com`.
 App Check enforcement is intentionally deferred in this production-hardening pass; only configure `VITE_FIREBASE_APPCHECK_SITE_KEY` when Storage App Check is already enabled for the project.
 
 If Firebase CLI management commands start failing with `Your credentials are no longer valid`, refresh them with:

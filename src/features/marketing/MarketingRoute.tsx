@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import type { ReactNode } from 'react'
 import { ArrowRight, FileStack, MessageSquareMore } from 'lucide-react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 
 import {
   beginGoogleSignIn,
@@ -72,11 +72,13 @@ export default function MarketingRoute() {
                 >
                   {user ? 'Open workspace' : 'Sign in'}
                 </Button>
-                <Button asChild className="rounded-xl bg-[#173f39] text-white hover:bg-[#0f312b]">
-                  <Link to="/app">
-                    Open the sample workspace
-                    <ArrowRight />
-                  </Link>
+                <Button
+                  className="rounded-xl bg-[#173f39] text-white hover:bg-[#0f312b]"
+                  onClick={() => void handleGoogleEntry('default')}
+                  disabled={authBusy !== null}
+                >
+                  {user ? 'Open workspace' : 'Start with Google'}
+                  <ArrowRight />
                 </Button>
               </div>
             </div>
@@ -103,11 +105,14 @@ export default function MarketingRoute() {
             </div>
 
             <div className="flex flex-wrap gap-3">
-              <Button asChild size="lg" className="rounded-xl bg-[#173f39] px-4 text-white hover:bg-[#0f312b]">
-                <Link to="/app">
-                  Open the sample workspace
-                  <ArrowRight />
-                </Link>
+              <Button
+                size="lg"
+                className="rounded-xl bg-[#173f39] px-4 text-white hover:bg-[#0f312b]"
+                onClick={() => void handleGoogleEntry('default')}
+                disabled={authBusy !== null}
+              >
+                {user ? 'Open workspace' : 'Start with Google'}
+                <ArrowRight />
               </Button>
               <Button
                 size="lg"
@@ -317,22 +322,25 @@ export default function MarketingRoute() {
           <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
             <div className="space-y-3">
               <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-[#5f7670]">
-                Try it with sample data first
+                Start fast after sign-in
               </p>
               <h2 className="font-heading text-4xl font-semibold tracking-[-0.05em] text-[#102d28]">
-                Open one month and see the review flow in context.
+                Sign in, see the workflow once, then replace it with your own data.
               </h2>
               <p className="max-w-2xl text-base leading-7 text-[#4c6660]">
-                Start in the sample workspace, move through one month, and see whether the review flow is clearer than the spreadsheet process you use today.
+                New accounts open with a sample month inside the workspace so the value is obvious right away. Delete the sample data when you are ready and upload the files for your own client.
               </p>
             </div>
 
             <div className="flex flex-wrap gap-3">
-              <Button asChild size="lg" className="rounded-xl bg-[#173f39] text-white hover:bg-[#0f312b]">
-                <Link to="/app">
-                  Open the sample workspace
-                  <ArrowRight />
-                </Link>
+              <Button
+                size="lg"
+                className="rounded-xl bg-[#173f39] text-white hover:bg-[#0f312b]"
+                onClick={() => void handleGoogleEntry('default')}
+                disabled={authBusy !== null}
+              >
+                {user ? 'Open workspace' : 'Sign in with Google'}
+                <ArrowRight />
               </Button>
               <Button
                 size="lg"

@@ -42,12 +42,10 @@ export default function QueuePage() {
     buildCurrentPath,
     currentPeriodBundle,
     currentWorkspace,
-    handleLoadSampleSnapshot,
     handleManualMatch,
     handleManualUnmatch,
     handleSaveRecordAnnotation,
     setShowNewPeriodForm,
-    userSignedIn,
   } = useWorkspace()
   const [searchParams, setSearchParams] = useSearchParams()
   const [selectedMatchIds, setSelectedMatchIds] = useState<string[]>([])
@@ -129,14 +127,6 @@ export default function QueuePage() {
           label: 'Create month',
           onClick: () => setShowNewPeriodForm(true),
         }}
-        tertiaryAction={
-          !userSignedIn
-            ? {
-                label: 'Open sample month',
-                onClick: handleLoadSampleSnapshot,
-              }
-            : undefined
-        }
         steps={[
           {
             title: 'Bring in the files for the month',

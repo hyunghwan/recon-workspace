@@ -1,6 +1,7 @@
 import { Navigate, Outlet, Route, Routes } from 'react-router-dom'
 
 import { ReconLockup } from '@/components/brand/ReconBrand'
+import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import FollowUpPage from './FollowUpPage'
 import ImportsPage from './ImportsPage'
@@ -14,7 +15,7 @@ export default function WorkspaceRoute() {
   return (
     <WorkspaceProvider>
       <Routes>
-        <Route element={<WorkspaceLayout />}>
+        <Route element={<WorkspaceShellGuard />}>
           <Route index element={<WorkspaceEntryRedirect />} />
           <Route element={<WorkspaceReadyGuard />}>
             <Route path=":workspaceId/:periodId" element={<WorkspaceSectionRedirect />} />
@@ -29,13 +30,23 @@ export default function WorkspaceRoute() {
   )
 }
 
-function WorkspaceEntryRedirect() {
-  const { buildDefaultPath, routingReady } = useWorkspace()
-  const targetPath = buildDefaultPath('queue')
+function WorkspaceShellGuard() {
+  const { authReady, cloudEnabled, handleDirectSignIn, routingReady, userSignedIn } = useWorkspace()
 
-  if (!routingReady) {
+  if (!authReady || !routingReady) {
     return <WorkspaceLoadingState />
   }
+
+  if (!userSignedIn) {
+    return <WorkspaceSignInState cloudEnabled={cloudEnabled} onSignIn={handleDirectSignIn} />
+  }
+
+  return <WorkspaceLayout />
+}
+
+function WorkspaceEntryRedirect() {
+  const { buildDefaultPath } = useWorkspace()
+  const targetPath = buildDefaultPath('queue')
 
   if (!targetPath) {
     return <WorkspaceBlankState />
@@ -45,12 +56,8 @@ function WorkspaceEntryRedirect() {
 }
 
 function WorkspaceSectionRedirect() {
-  const { buildCurrentPath, routingReady } = useWorkspace()
+  const { buildCurrentPath } = useWorkspace()
   const nextPath = buildCurrentPath('queue')
-
-  if (!routingReady) {
-    return <WorkspaceLoadingState />
-  }
 
   if (!nextPath) {
     return <WorkspaceBlankState />
@@ -60,11 +67,7 @@ function WorkspaceSectionRedirect() {
 }
 
 function WorkspaceReadyGuard() {
-  const { routingReady, snapshot } = useWorkspace()
-
-  if (!routingReady) {
-    return <WorkspaceLoadingState />
-  }
+  const { snapshot } = useWorkspace()
 
   if (!snapshot.workspaces.length) {
     return <WorkspaceBlankState />
@@ -75,7 +78,7 @@ function WorkspaceReadyGuard() {
 
 function WorkspaceLoadingState() {
   return (
-    <div className="flex min-h-[40vh] items-center justify-center">
+    <div className="flex min-h-screen items-center justify-center bg-[#eef2f1] px-4">
       <Card className="w-full max-w-md border border-white/70 bg-white/90 shadow-[0_20px_60px_-36px_rgba(15,23,42,0.45)]">
         <CardHeader className="space-y-4">
           <ReconLockup
@@ -91,6 +94,47 @@ function WorkspaceLoadingState() {
         </CardHeader>
         <CardContent className="text-sm text-muted-foreground">
           If you have a cloud session, your saved data will load first.
+        </CardContent>
+      </Card>
+    </div>
+  )
+}
+
+function WorkspaceSignInState({
+  cloudEnabled,
+  onSignIn,
+}: {
+  cloudEnabled: boolean
+  onSignIn: () => Promise<void>
+}) {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-[#eef2f1] px-4">
+      <Card className="w-full max-w-xl border border-white/70 bg-white/95 shadow-[0_20px_60px_-36px_rgba(15,23,42,0.45)]">
+        <CardHeader className="space-y-4">
+          <ReconLockup
+            subtitle="Sign in, review the sample month, then swap in your own data."
+            markClassName="h-12 w-12"
+            titleClassName="text-base font-semibold text-[#102d28]"
+            subtitleClassName="text-sm text-[#617a73]"
+          />
+          <div className="space-y-2">
+            <h1 className="text-2xl font-semibold tracking-tight text-[#102d28]">Sign in to open your workspace</h1>
+            <CardDescription className="text-sm leading-6">
+              New accounts start with a sample month inside the app so you can see the flow immediately. You can delete the sample data as soon as you are ready to upload your own files.
+            </CardDescription>
+          </div>
+        </CardHeader>
+        <CardContent className="flex flex-wrap gap-3">
+          <Button
+            className="rounded-xl bg-[#173f39] text-white hover:bg-[#0f312b]"
+            onClick={() => void onSignIn()}
+            disabled={!cloudEnabled}
+          >
+            {cloudEnabled ? 'Sign in with Google' : 'Cloud unavailable'}
+          </Button>
+          <Button asChild variant="outline" className="rounded-xl border-[#dce4e1] bg-white">
+            <a href="/">Back to home</a>
+          </Button>
         </CardContent>
       </Card>
     </div>

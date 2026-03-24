@@ -2,6 +2,7 @@ import {
   collection,
   deleteDoc,
   doc,
+  getDoc,
   getDocs,
   setDoc,
   writeBatch,
@@ -33,6 +34,7 @@ import type {
   PeriodRecord,
   ReconSnapshot,
   RecordAnnotation,
+  UserWorkspacePreferences,
   WorkspaceBundle,
   WorkspaceRecord,
 } from './types'
@@ -247,6 +249,10 @@ async function setDocSanitized(reference: ReturnType<typeof doc>, payload: objec
   await setDoc(reference, sanitizeForFirestore(payload))
 }
 
+async function setDocSanitizedMerged(reference: ReturnType<typeof doc>, payload: object) {
+  await setDoc(reference, sanitizeForFirestore(payload), { merge: true })
+}
+
 async function replaceCollectionDocuments<T>(
   reference: CollectionReference,
   documents: T[],
@@ -355,7 +361,14 @@ export async function loadReconSnapshot(userId: string): Promise<ReconSnapshot> 
   const db = requireFirestore()
   const workspacesRef = collection(db, 'users', userId, 'workspaces')
   const workspacesSnapshot = await getDocs(workspacesRef)
-  const workspaces = workspacesSnapshot.docs.map((docSnap) => docSnap.data() as WorkspaceRecord)
+  const workspaces = workspacesSnapshot.docs.map((docSnap) => {
+    const workspace = docSnap.data() as WorkspaceRecord & { origin?: WorkspaceRecord['origin'] }
+
+    return {
+      ...workspace,
+      origin: workspace.origin ?? 'user',
+    } satisfies WorkspaceRecord
+  })
   const bundles = await Promise.all(
     workspaces.map((workspace) => loadWorkspaceBundle(userId, workspace)),
   )
@@ -363,6 +376,27 @@ export async function loadReconSnapshot(userId: string): Promise<ReconSnapshot> 
   return {
     workspaces: bundles.sort((left, right) => left.workspace.name.localeCompare(right.workspace.name)),
   }
+}
+
+export async function loadUserWorkspacePreferences(userId: string): Promise<UserWorkspacePreferences> {
+  const db = requireFirestore()
+  const userSnapshot = await getDoc(doc(db, 'users', userId))
+
+  if (!userSnapshot.exists()) {
+    return {}
+  }
+
+  const userData = userSnapshot.data() as UserWorkspacePreferences
+
+  return {
+    sampleDismissedAt: userData.sampleDismissedAt ?? null,
+    sampleSeededAt: userData.sampleSeededAt ?? null,
+  }
+}
+
+export async function saveUserWorkspacePreferences(userId: string, preferences: UserWorkspacePreferences) {
+  const db = requireFirestore()
+  await setDocSanitizedMerged(doc(db, 'users', userId), preferences)
 }
 
 async function deleteStorageAsset(storagePath: string) {

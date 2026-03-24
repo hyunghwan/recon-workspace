@@ -14,7 +14,7 @@ import {
   signOutCurrentUser,
 } from '@/auth'
 import { useAuthSession } from '@/auth/auth-session'
-import { createBlankWorkspaceBundle, createSampleSnapshot } from '@/data'
+import { createBlankWorkspaceBundle, createEmptySnapshot, createSampleSnapshot } from '@/data'
 import { isFirebaseConfigured } from '@/firebase'
 import {
   deleteImportFile,
@@ -23,11 +23,13 @@ import {
   deleteWorkspaceBundle,
   isImportUploadError,
   loadReconSnapshot,
+  loadUserWorkspacePreferences,
   replaceManualOverrides,
   savePeriodBundle,
   savePeriodRecord,
   saveReconSnapshot,
   saveRecordAnnotation,
+  saveUserWorkspacePreferences,
   saveWorkspaceBundle,
   saveWorkspaceRecord,
   uploadImportFile,
@@ -39,6 +41,7 @@ import type {
   PeriodBundle,
   ReconSnapshot,
   ReviewState,
+  UserWorkspacePreferences,
   WorkspaceBundle,
   WorkspaceRecord,
 } from '@/types'
@@ -52,6 +55,11 @@ import {
   sourceTypeLabel,
 } from '@/utils'
 import { WorkspaceContext, type WorkspaceContextValue } from './workspace-context'
+import {
+  getPreferredWorkspaceBundle,
+  isSampleWorkspaceRecord,
+  shouldAutoSeedSampleWorkspace,
+} from './workspace-onboarding'
 import type { AppPage } from './workspace-utils'
 import {
   addWorkspaceBundle,
@@ -63,7 +71,7 @@ import {
 } from './workspace-utils'
 
 function defaultSnapshot() {
-  return createSampleSnapshot()
+  return createEmptySnapshot()
 }
 
 function replaceWorkspaceBundle(snapshot: ReconSnapshot, workspaceId: string, nextWorkspaceBundle: WorkspaceBundle) {
@@ -207,7 +215,7 @@ function removeDeletedImportReferences(periodBundle: PeriodBundle, deletedRecord
 }
 
 function buildSnapshotDefaultPath(snapshot: ReconSnapshot, page: AppPage = 'queue') {
-  const defaultWorkspace = snapshot.workspaces.find((workspaceBundle) => workspaceBundle.periods.length) ?? snapshot.workspaces[0]
+  const defaultWorkspace = getPreferredWorkspaceBundle(snapshot)
   const defaultPeriod = defaultWorkspace?.periods[0]
 
   if (!defaultWorkspace || !defaultPeriod) {
@@ -222,11 +230,13 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const location = useLocation()
   const params = useParams()
   const { ready: authReady, user } = useAuthSession()
+  const emptySnapshot = useMemo(() => createEmptySnapshot(), [])
 
   const [snapshot, setSnapshot] = useState<ReconSnapshot>(() => defaultSnapshot())
   const [selectedPeriodIdByWorkspace, setSelectedPeriodIdByWorkspace] = useState(() =>
     buildPeriodSelectionMap(defaultSnapshot()),
   )
+  const [userPreferences, setUserPreferences] = useState<UserWorkspacePreferences>({})
   const [cloudMessage, setCloudMessage] = useState('')
   const [syncing, setSyncing] = useState(false)
   const [loadingCloud, setLoadingCloud] = useState(false)
@@ -248,11 +258,9 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     if (!authReady) return
 
     if (!user || !cloudEnabled) {
-      if (!user) {
-        const sampleSnapshot = createSampleSnapshot()
-        setSnapshot(sampleSnapshot)
-        setSelectedPeriodIdByWorkspace(buildPeriodSelectionMap(sampleSnapshot))
-      }
+      setSnapshot(emptySnapshot)
+      setSelectedPeriodIdByWorkspace({})
+      setUserPreferences({})
       setLoadingCloud(false)
       setCloudHydrated(true)
       return
@@ -265,8 +273,12 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       try {
         setCloudHydrated(false)
         setLoadingCloud(true)
-        const cloudSnapshot = await loadReconSnapshot(activeUser.uid)
+        const [cloudSnapshot, preferences] = await Promise.all([
+          loadReconSnapshot(activeUser.uid),
+          loadUserWorkspacePreferences(activeUser.uid),
+        ])
         if (cancelled) return
+        setUserPreferences(preferences)
 
         if (cloudSnapshot.workspaces.length) {
           setSnapshot(cloudSnapshot)
@@ -274,10 +286,31 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
           setCloudMessage(
             `Loaded ${cloudSnapshot.workspaces.length} client ${cloudSnapshot.workspaces.length > 1 ? 'records' : 'record'} from your saved workspace.`,
           )
+        } else if (shouldAutoSeedSampleWorkspace(cloudSnapshot, preferences)) {
+          const sampleSeededAt = new Date().toISOString()
+          const nextPreferences: UserWorkspacePreferences = {
+            ...preferences,
+            sampleSeededAt,
+          }
+          const sampleSnapshot = createSampleSnapshot(activeUser.uid)
+
+          setSnapshot(sampleSnapshot)
+          setSelectedPeriodIdByWorkspace(buildPeriodSelectionMap(sampleSnapshot))
+          setUserPreferences(nextPreferences)
+          setCloudMessage('Signed in. Sample data is ready so you can learn the workflow before uploading your own files.')
+
+          try {
+            await saveReconSnapshot(activeUser.uid, sampleSnapshot)
+            await saveUserWorkspacePreferences(activeUser.uid, nextPreferences)
+          } catch (error) {
+            if (cancelled) return
+            const message = error instanceof Error ? error.message : 'Unknown sample onboarding error'
+            setCloudMessage(`Signed in, but the sample workspace could not be saved to your account: ${message}`)
+          }
         } else {
           setSnapshot(cloudSnapshot)
           setSelectedPeriodIdByWorkspace({})
-          setCloudMessage('Signed in. Create your first client and month to start saving work here.')
+          setCloudMessage('Signed in. Create your first client workspace and month to start uploading your own files.')
         }
       } catch (error) {
         const message = error instanceof Error ? error.message : 'Unknown cloud load error'
@@ -295,7 +328,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true
     }
-  }, [authReady, cloudEnabled, user])
+  }, [authReady, cloudEnabled, emptySnapshot, user])
 
   useEffect(() => {
     setSelectedPeriodIdByWorkspace((current) => buildPeriodSelectionMap(snapshot, current))
@@ -314,8 +347,12 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   }, [periodIdParam, workspaceIdParam])
 
   const currentWorkspace = useMemo(() => {
-    return snapshot.workspaces.find((workspaceBundle) => workspaceBundle.workspace.id === workspaceIdParam) ?? snapshot.workspaces[0] ?? null
-  }, [snapshot.workspaces, workspaceIdParam])
+    return (
+      snapshot.workspaces.find((workspaceBundle) => workspaceBundle.workspace.id === workspaceIdParam) ??
+      getPreferredWorkspaceBundle(snapshot)
+    )
+  }, [snapshot, workspaceIdParam])
+  const isCurrentWorkspaceSample = isSampleWorkspaceRecord(currentWorkspace?.workspace)
 
   const currentWorkspaceId = currentWorkspace?.workspace.id ?? ''
   const selectedPeriodId =
@@ -791,7 +828,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
 
   async function handleDirectSignIn() {
     if (!cloudEnabled) {
-      setCloudMessage('Sign-in is not configured yet, so only the example client is available.')
+      setCloudMessage('Sign-in is not configured yet for this environment.')
       return
     }
 
@@ -826,27 +863,37 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   async function handleSignOut() {
     await signOutCurrentUser()
 
-    const sampleSnapshot = createSampleSnapshot()
-    applySnapshot(sampleSnapshot)
+    applySnapshot(emptySnapshot)
     setShowNewPeriodForm(false)
     setShowNewWorkspaceForm(false)
-    setCloudMessage('Signed out. The example client is ready if you want to keep exploring the workflow.')
-    const nextPath = buildSnapshotDefaultPath(sampleSnapshot, 'queue')
-    if (nextPath) {
-      navigate(nextPath)
-    }
+    setUserPreferences({})
+    setCloudMessage('Signed out. Sign in again to open your workspace.')
+    navigate('/app', { replace: true })
   }
 
-  function handleLoadSampleSnapshot() {
-    const sampleSnapshot = createSampleSnapshot()
-    applySnapshot(sampleSnapshot)
-    setShowNewPeriodForm(false)
-    setShowNewWorkspaceForm(false)
-    setCloudMessage('Example client opened. You can review the client, month, and workflow before connecting your own data.')
-    const nextPath = buildSnapshotDefaultPath(sampleSnapshot, currentPage)
-    if (nextPath) {
-      navigate(nextPath)
+  async function handleDeleteSampleWorkspace() {
+    if (!currentWorkspace || !isSampleWorkspaceRecord(currentWorkspace.workspace)) return
+
+    const sampleDismissedAt = new Date().toISOString()
+    const nextPreferences: UserWorkspacePreferences = {
+      ...userPreferences,
+      sampleDismissedAt,
     }
+    const nextSnapshot = removeWorkspaceBundle(snapshot, currentWorkspace.workspace.id)
+    const nextPath = buildSnapshotDefaultPath(nextSnapshot, currentPage) ?? '/app'
+
+    setUserPreferences(nextPreferences)
+    commitSnapshot(
+      nextSnapshot,
+      'Deleted sample data.',
+      user && cloudEnabled
+        ? async () => {
+            await saveUserWorkspacePreferences(user.uid, nextPreferences)
+            await deleteWorkspaceBundle(user.uid, currentWorkspace.workspace.id)
+          }
+        : undefined,
+    )
+    navigate(nextPath, { replace: true })
   }
 
   function handleExportFollowUp() {
@@ -868,6 +915,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     followUpSummary,
     handleCreatePeriod,
     handleCreateWorkspace,
+    handleDeleteSampleWorkspace,
     handleDeleteImportBatch,
     handleDeletePeriod,
     handleDeleteWorkspace,
@@ -875,7 +923,6 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     handleExportFollowUp,
     handleImportBatch,
     handleImportSignIn,
-    handleLoadSampleSnapshot,
     handleManualMatch,
     handleManualSave,
     handleManualUnmatch,
@@ -883,6 +930,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     handleSaveRecordAnnotation,
     handleSignOut,
     importing,
+    isCurrentWorkspaceSample,
     loadingCloud,
     navigateToPeriod,
     navigateToWorkspace,

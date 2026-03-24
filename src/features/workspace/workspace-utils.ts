@@ -10,6 +10,7 @@ import type {
   WorkspaceBundle,
 } from '@/types'
 import { resolvePrimaryRecord, uniqueValues } from '@/utils'
+import { getWorkspaceOrigin } from './workspace-onboarding'
 
 export type AppPage = 'queue' | 'imports' | 'follow-up'
 
@@ -46,7 +47,11 @@ export function buildPeriodSelectionMap(snapshot: ReconSnapshot, previous: Recor
 }
 
 export function sortWorkspaces(workspaces: WorkspaceBundle[]) {
-  return [...workspaces].sort((left, right) => left.workspace.name.localeCompare(right.workspace.name))
+  return [...workspaces].sort((left, right) => {
+    const originDelta = Number(getWorkspaceOrigin(left.workspace) === 'sample') - Number(getWorkspaceOrigin(right.workspace) === 'sample')
+    if (originDelta !== 0) return originDelta
+    return left.workspace.name.localeCompare(right.workspace.name)
+  })
 }
 
 export function replacePeriodBundle(snapshot: ReconSnapshot, workspaceId: string, nextPeriodBundle: PeriodBundle) {

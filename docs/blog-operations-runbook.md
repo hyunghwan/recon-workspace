@@ -9,7 +9,7 @@ Use this runbook to keep the Recon Workspace blog publishing consistently withou
 3. Draft the article in `content/blog/<slug>.md`.
 4. Generate one hero image with [`$imagegen`](imagegen skill).
 5. Run `pnpm blog:check`.
-6. Run `SITE_ORIGIN=https://your-firebase-project-id.web.app pnpm build`.
+6. Run `SITE_ORIGIN=https://reconcile.sqncs.com pnpm build`.
 7. Review the built pages with `pnpm preview`.
 8. Deploy only after metadata, CTA, and links look correct.
 
@@ -52,14 +52,14 @@ Avoid: tacky stock-photo look; cheesy lens flare; oversaturated colors; clutter
 ## Example commands
 ```bash
 pnpm blog:check
-SITE_ORIGIN=https://your-firebase-project-id.web.app pnpm build
+SITE_ORIGIN=https://reconcile.sqncs.com pnpm build
 pnpm preview
 ```
 
 ## Production rule for absolute URLs
 - Never hardcode the public domain in article content or templates.
-- Use `SITE_ORIGIN=https://your-firebase-project-id.web.app` at build time for canonical URLs, Open Graph tags, RSS, and sitemap output.
-- The build fails if `SITE_ORIGIN` is missing, and release builds fail if `SITE_ORIGIN` is not the canonical Firebase Hosting origin.
+- Use `SITE_ORIGIN=https://reconcile.sqncs.com` at build time for canonical URLs, Open Graph tags, RSS, and sitemap output.
+- The build fails if `SITE_ORIGIN` is missing, and release builds fail if `SITE_ORIGIN` is not the canonical production domain.
 
 ## Ongoing optimization loop
 - Refresh existing articles when search intent changes or product messaging improves.

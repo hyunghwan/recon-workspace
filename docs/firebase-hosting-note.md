@@ -4,8 +4,8 @@ Recon Workspace now releases through Firebase Hosting, not a Vercel-first path.
 
 ## Production release shape
 - Static SPA hosted from `dist/`
-- Canonical public origin: `https://your-firebase-project-id.web.app`
-- Secondary authorized domain: `https://your-firebase-project-id.firebaseapp.com`
+- Canonical public origin: `https://reconcile.sqncs.com`
+- Firebase Auth fallback domain: `https://your-firebase-project-id.firebaseapp.com`
 - Firebase Auth for Google sign-in
 - Firestore for workspace and month data
 - Firebase Storage for original CSV uploads

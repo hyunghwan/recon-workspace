@@ -30,7 +30,7 @@ Small bookkeeping agencies and outsourced bookkeepers handling messy monthly clo
 
 ## Validation assets
 - landing page with clear wedge
-- interactive demo with sample workspace
+- sign-up-first landing with authenticated sample onboarding
 - one-page summary PDF later
 
 ## Early conversion goal

@@ -108,6 +108,28 @@ describe('firebase emulator regression coverage', () => {
     successLines.push('Owner writes and reads the selected client month successfully.')
   })
 
+  it('allows an owner to save onboarding preferences on their own user record', async () => {
+    const owner = testEnv.authenticatedContext('owner')
+    const intruder = testEnv.authenticatedContext('intruder')
+
+    await assertSucceeds(
+      owner.firestore().doc('users/owner').set({
+        sampleSeededAt: '2026-03-24T00:00:00.000Z',
+        sampleDismissedAt: null,
+      }),
+    )
+    await assertSucceeds(owner.firestore().doc('users/owner').get())
+
+    await assertFails(
+      intruder.firestore().doc('users/owner').set({
+        sampleDismissedAt: '2026-03-24T01:00:00.000Z',
+      }),
+    )
+
+    successLines.push('Owner onboarding preferences can be saved on the user root document.')
+    failureLines.push('Non-owners cannot overwrite another user onboarding preferences.')
+  })
+
   it('blocks non-owners from writing another owner’s Firestore records', async () => {
     const intruder = testEnv.authenticatedContext('intruder')
     const db = intruder.firestore()

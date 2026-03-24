@@ -33,7 +33,6 @@ export default function ImportsPage() {
     currentWorkspace,
     handleImportBatch,
     handleImportSignIn,
-    handleLoadSampleSnapshot,
     importing,
     setShowNewPeriodForm,
     userSignedIn,
@@ -227,14 +226,6 @@ export default function ImportsPage() {
                 label: 'Create month',
                 onClick: () => setShowNewPeriodForm(true),
               }}
-              tertiaryAction={
-                !userSignedIn
-                  ? {
-                      label: 'Open sample month',
-                      onClick: handleLoadSampleSnapshot,
-                    }
-                  : undefined
-              }
               steps={[
                 {
                   title: 'Bring in the month’s files',

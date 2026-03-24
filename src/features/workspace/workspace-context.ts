@@ -24,6 +24,7 @@ export type WorkspaceContextValue = {
   followUpSummary: string
   handleCreatePeriod: (monthKey: string) => void
   handleCreateWorkspace: (name: string) => void
+  handleDeleteSampleWorkspace: () => Promise<void>
   handleDeleteImportBatch: (importId: string) => Promise<void>
   handleDeletePeriod: () => Promise<void>
   handleDeleteWorkspace: () => Promise<void>
@@ -31,7 +32,6 @@ export type WorkspaceContextValue = {
   handleExportFollowUp: () => void
   handleImportBatch: (input: { file: File | null; form: ImportFormState }) => Promise<void>
   handleImportSignIn: () => Promise<void>
-  handleLoadSampleSnapshot: () => void
   handleManualSave: () => Promise<void>
   handleManualMatch: (input: { note?: string; recordIds: string[] }) => Promise<void>
   handleManualUnmatch: (input: { note?: string; recordIds: string[] }) => Promise<void>
@@ -43,6 +43,7 @@ export type WorkspaceContextValue = {
   }) => Promise<void>
   handleSignOut: () => Promise<void>
   importing: boolean
+  isCurrentWorkspaceSample: boolean
   loadingCloud: boolean
   navigateToPeriod: (periodId: string) => void
   navigateToWorkspace: (workspaceId: string) => void

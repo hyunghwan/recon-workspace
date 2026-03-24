@@ -16,10 +16,8 @@ export default function FollowUpPage() {
     currentWorkspace,
     followUpSummary,
     handleExportFollowUp,
-    handleLoadSampleSnapshot,
     setShowNewPeriodForm,
     stats,
-    userSignedIn,
   } = useWorkspace()
   const reviewPath = buildCurrentPath('queue')
   const importPath = buildCurrentPath('imports')
@@ -42,14 +40,6 @@ export default function FollowUpPage() {
           label: 'Create month',
           onClick: () => setShowNewPeriodForm(true),
         }}
-        tertiaryAction={
-          !userSignedIn
-            ? {
-                label: 'Open sample month',
-                onClick: handleLoadSampleSnapshot,
-              }
-            : undefined
-        }
         steps={[
           {
             title: 'Bring in the files for the month',

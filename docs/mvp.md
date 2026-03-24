@@ -44,7 +44,7 @@ For one selected item:
 - generate a follow-up summary or export list
 
 ### 6. Demo data
-Include a realistic sample workspace so the product can be shown immediately.
+Include a realistic sample workspace that appears after sign-in and can be deleted as soon as the user is ready to upload real data.
 
 ## Explicitly out of scope
 - direct accounting integrations

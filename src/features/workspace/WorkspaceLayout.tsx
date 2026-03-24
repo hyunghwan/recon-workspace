@@ -3,10 +3,8 @@ import {
   ArrowRight,
   Download,
   FolderPlus,
-  LogIn,
   LogOut,
   PencilLine,
-  RefreshCcw,
   Save,
   ShieldCheck,
   Trash2,
@@ -35,26 +33,25 @@ const navItems = [
 
 export default function WorkspaceLayout() {
   const {
-    authReady,
     buildCurrentPath,
-    cloudEnabled,
     cloudMessage,
     currentPage,
     currentPeriodBundle,
     currentWorkspace,
     handleCreatePeriod,
     handleCreateWorkspace,
+    handleDeleteSampleWorkspace,
     handleDeletePeriod,
     handleDeleteWorkspace,
-    handleDirectSignIn,
     handleExportFollowUp,
-    handleLoadSampleSnapshot,
     handleManualSave,
     handleRenameWorkspace,
     handleSignOut,
+    isCurrentWorkspaceSample,
     loadingCloud,
     navigateToPeriod,
     navigateToWorkspace,
+    setCloudMessage,
     setShowNewPeriodForm,
     setShowNewWorkspaceForm,
     showNewPeriodForm,
@@ -63,7 +60,6 @@ export default function WorkspaceLayout() {
     stats,
     syncing,
     userEmail,
-    userSignedIn,
   } = useWorkspace()
   const [newWorkspaceName, setNewWorkspaceName] = useState('')
   const [newPeriodMonth, setNewPeriodMonth] = useState(monthInputValue())
@@ -158,7 +154,7 @@ export default function WorkspaceLayout() {
                       </Button>
                     </div>
                   )}
-                  {currentWorkspace && (
+                  {currentWorkspace && !isCurrentWorkspaceSample && (
                     <div className="space-y-2 border border-[#e2e8e5] bg-[#fafcfb] p-3">
                       <div className="flex items-center gap-2 text-xs uppercase tracking-[0.14em] text-muted-foreground">
                         <PencilLine className="size-3.5" />
@@ -264,7 +260,7 @@ export default function WorkspaceLayout() {
                       </Button>
                     </div>
                   )}
-                  {currentPeriodBundle && (
+                  {currentPeriodBundle && !isCurrentWorkspaceSample && (
                     <Button
                       variant="outline"
                       className="w-full rounded-lg border-[#ead7d7] bg-white text-[#8a3d3d] hover:bg-[#fff4f4]"
@@ -361,10 +357,6 @@ export default function WorkspaceLayout() {
             </section>
 
             <div className="flex flex-wrap gap-2">
-              <Button variant="outline" className="rounded-lg border-[#dce4e1] bg-white" onClick={handleLoadSampleSnapshot}>
-                <RefreshCcw />
-                Open example client
-              </Button>
               <Button asChild variant="ghost" className="rounded-lg text-muted-foreground">
                 <Link to="/">View home page</Link>
               </Button>
@@ -412,52 +404,28 @@ export default function WorkspaceLayout() {
                       Export follow-up
                     </Button>
                   )}
-                  {!userSignedIn ? (
-                    <Button
-                      variant="outline"
-                      className="rounded-lg border-[#dce4e1] bg-white"
-                      onClick={handleDirectSignIn}
-                      disabled={!cloudEnabled}
-                    >
-                      <LogIn />
-                      {cloudEnabled ? 'Sign in' : 'Cloud unavailable'}
-                    </Button>
-                  ) : (
-                    <>
-                      <Button
-                        variant="outline"
-                        className="rounded-lg border-[#dce4e1] bg-white"
-                        onClick={handleManualSave}
-                        disabled={syncing}
-                      >
-                        <Save />
-                        {syncing ? 'Syncing...' : 'Sync'}
-                      </Button>
-                      <Button variant="outline" className="rounded-lg border-[#dce4e1] bg-white" onClick={handleSignOut}>
-                        <LogOut />
-                        Sign out
-                      </Button>
-                    </>
-                  )}
+                  <Button
+                    variant="outline"
+                    className="rounded-lg border-[#dce4e1] bg-white"
+                    onClick={handleManualSave}
+                    disabled={syncing}
+                  >
+                    <Save />
+                    {syncing ? 'Syncing...' : 'Sync'}
+                  </Button>
+                  <Button variant="outline" className="rounded-lg border-[#dce4e1] bg-white" onClick={handleSignOut}>
+                    <LogOut />
+                    Sign out
+                  </Button>
                 </div>
 
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-[#617a73]">
                   <div className="inline-flex items-center gap-1.5">
-                    {loadingCloud
-                      ? 'Loading saved client records...'
-                      : userSignedIn
-                        ? userEmail ?? 'Signed in'
-                        : 'Example client loaded'}
+                    {loadingCloud ? 'Loading saved client records...' : userEmail ?? 'Signed in'}
                   </div>
                   <div className="inline-flex items-center gap-1.5">
                     <ShieldCheck aria-hidden="true" className="size-3.5" />
-                    {!cloudEnabled
-                      ? 'Sign-in setup incomplete'
-                      : !authReady
-                        ? 'Checking sign-in status...'
-                        : userSignedIn
-                          ? 'Changes save to your account'
-                          : 'Sign in to save and upload files'}
+                    Changes save to your account
                   </div>
                 </div>
 
@@ -470,6 +438,42 @@ export default function WorkspaceLayout() {
 
           <main className="flex-1 px-4 py-4 sm:px-6 lg:flex lg:min-h-0 lg:flex-col lg:overflow-y-auto lg:px-8 lg:py-6 xl:overflow-hidden">
             <div className="flex min-h-0 flex-1 flex-col">
+              {isCurrentWorkspaceSample && (
+                <section className="mb-4 flex flex-col gap-4 border border-[#ead7d7] bg-[#fff7f5] px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="space-y-1">
+                    <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-[#8a3d3d]">
+                      Sample data
+                    </p>
+                    <p className="text-sm leading-6 text-[#6f4a4a]">
+                      This workspace is here to show the product in context. Delete the sample data when you are ready to upload your own files.
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      variant="outline"
+                      className="rounded-xl border-[#d8c5c5] bg-white"
+                      onClick={() => {
+                        setShowNewWorkspaceForm(true)
+                        setCloudMessage('Create your own client workspace, then delete the sample data when you are ready.')
+                      }}
+                    >
+                      <FolderPlus />
+                      Create my workspace
+                    </Button>
+                    <Button
+                      className="rounded-xl bg-[#9b3f3f] text-white hover:bg-[#842f2f]"
+                      onClick={() => {
+                        const confirmed = window.confirm('Delete sample data? This removes the sample workspace and leaves only your own workspaces.')
+                        if (!confirmed) return
+                        void handleDeleteSampleWorkspace()
+                      }}
+                    >
+                      <Trash2 />
+                      Delete sample data
+                    </Button>
+                  </div>
+                </section>
+              )}
               <Outlet />
             </div>
           </main>

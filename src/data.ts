@@ -3,6 +3,7 @@ import type {
   NormalizedRecord,
   ReconSnapshot,
   SourceType,
+  WorkspaceOrigin,
   WorkspaceBundle,
   WorkspaceRecord,
 } from './types'
@@ -14,11 +15,17 @@ function timestamp(day: string, hour = '09:00:00.000Z') {
   return `${day}T${hour}`
 }
 
-function createWorkspaceRecord(id: string, name: string): WorkspaceRecord {
+function createWorkspaceRecord(
+  id: string,
+  name: string,
+  ownerUserId = demoOwnerId,
+  origin: WorkspaceOrigin = 'sample',
+): WorkspaceRecord {
   return {
     id,
     name,
-    ownerUserId: demoOwnerId,
+    ownerUserId,
+    origin,
     defaultCurrency: 'USD',
     createdAt: timestamp('2026-03-01'),
     updatedAt: timestamp('2026-03-22'),
@@ -94,8 +101,8 @@ function createRecord(input: {
   }
 }
 
-function buildNorthwindWorkspace(): WorkspaceBundle {
-  const workspace = createWorkspaceRecord('workspace_northwind', 'Northwind Goods')
+function buildNorthwindWorkspace(ownerUserId = demoOwnerId): WorkspaceBundle {
+  const workspace = createWorkspaceRecord('workspace_northwind', 'Northwind Goods', ownerUserId, 'sample')
   const marchPeriod = createEmptyPeriod(workspace.id, '2026-03')
   const februaryPeriod = createEmptyPeriod(workspace.id, '2026-02')
 
@@ -406,9 +413,15 @@ function buildNorthwindWorkspace(): WorkspaceBundle {
   }
 }
 
-export function createSampleSnapshot(): ReconSnapshot {
+export function createEmptySnapshot(): ReconSnapshot {
   return {
-    workspaces: [buildNorthwindWorkspace()],
+    workspaces: [],
+  }
+}
+
+export function createSampleSnapshot(ownerUserId = demoOwnerId): ReconSnapshot {
+  return {
+    workspaces: [buildNorthwindWorkspace(ownerUserId)],
   }
 }
 
@@ -419,6 +432,7 @@ export function createBlankWorkspaceBundle(name: string, ownerUserId: string): W
     id: workspaceId,
     name: name.trim() || 'New workspace',
     ownerUserId,
+    origin: 'user',
     defaultCurrency: 'USD',
     createdAt: now,
     updatedAt: now,

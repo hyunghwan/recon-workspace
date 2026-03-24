@@ -5,6 +5,15 @@ mkdir -p .sisyphus/evidence
 log_file=".sisyphus/evidence/task-9-release-automation.txt"
 error_file=".sisyphus/evidence/task-9-release-automation-error.txt"
 
+set -a
+if [[ -f .env.local ]]; then
+  # shellcheck disable=SC1091
+  source .env.local
+fi
+set +a
+
+node scripts/check-release-firebase-env.mjs | tee -a "$log_file"
+
 {
   echo "Task 9 Release Automation Evidence"
   echo

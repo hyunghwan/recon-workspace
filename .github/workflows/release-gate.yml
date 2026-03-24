@@ -11,7 +11,7 @@ jobs:
   verify:
     runs-on: ubuntu-latest
     env:
-      SITE_ORIGIN: https://your-firebase-project-id.web.app
+      SITE_ORIGIN: https://reconcile.sqncs.com
     steps:
       - uses: actions/checkout@v4
 

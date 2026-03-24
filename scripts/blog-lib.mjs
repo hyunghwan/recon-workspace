@@ -18,7 +18,7 @@ export const BLOG_TITLE = `${BRAND_NAME} Blog`
 export const BLOG_DESCRIPTION =
   'Practical reconciliation guides for bookkeepers, month-end close teams, and operators who need a cleaner workflow around missing support and unresolved items.'
 export const DEFAULT_SITE_ORIGIN = 'http://localhost:4173'
-export const CANONICAL_SITE_ORIGIN = 'https://your-firebase-project-id.web.app'
+export const CANONICAL_SITE_ORIGIN = 'https://reconcile.sqncs.com'
 export const SECONDARY_AUTHORIZED_ORIGIN = 'https://your-firebase-project-id.firebaseapp.com'
 export const BLOG_STYLESHEET_PATH = '/blog/blog.css'
 export const CTA = {

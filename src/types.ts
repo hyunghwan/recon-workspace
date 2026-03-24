@@ -18,10 +18,13 @@ export type ManualOverrideKind = 'manual_match' | 'manual_unmatch'
 
 export type MatchProvenance = 'engine' | 'manual_match' | 'manual_unmatch'
 
+export type WorkspaceOrigin = 'sample' | 'user'
+
 export type WorkspaceRecord = {
   id: string
   name: string
   ownerUserId: string
+  origin: WorkspaceOrigin
   defaultCurrency: string
   createdAt: string
   updatedAt: string
@@ -138,6 +141,11 @@ export type WorkspaceBundle = {
 
 export type ReconSnapshot = {
   workspaces: WorkspaceBundle[]
+}
+
+export type UserWorkspacePreferences = {
+  sampleDismissedAt?: string | null
+  sampleSeededAt?: string | null
 }
 
 export type ImportFormState = {

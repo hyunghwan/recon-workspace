@@ -4,7 +4,7 @@
 - Brand name: `Recon Workspace`
 - Product description: `Reconciliation workspace for bookkeepers and small finance teams`
 - Primary audience: bookkeepers, bookkeeping agencies, small finance teams, fractional controllers
-- Primary product CTA: `Open the sample workspace` linking to `/app`
+- Primary product CTA: `Sign in to start` linking to `/app`
 
 ## Article goals
 - Bring in readers who are actively searching for reconciliation workflow help
@@ -17,7 +17,7 @@
 - Meta description length: 140-160 characters
 - Excerpt length: 90-220 characters
 - One canonical URL per article using `SITE_ORIGIN + /blog/<slug>/`
-- Release canonical origin is `https://your-firebase-project-id.web.app`
+- Release canonical origin is `https://reconcile.sqncs.com`
 - Page title format: `<Article Title> | Recon Workspace`
 
 ## Structure rules
@@ -38,7 +38,7 @@
 - Keep product CTA language internal-only
 
 ## CTA rules
-- Primary CTA: `Open the sample workspace`
+- Primary CTA: `Sign in to start`
 - Allowed support link: `/`
 - Allowed product CTA link: `/app`
 - Do not hardcode a production domain inside content

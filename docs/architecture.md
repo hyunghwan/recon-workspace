@@ -4,7 +4,7 @@
 - React + TypeScript + Vite
 - Static deployment on Firebase Hosting
 - Firebase Auth, Firestore, and Storage for the production data path
-- Local sample data for guided exploration when signed out
+- Authenticated sample onboarding for first-time workspace users
 
 ## App sections
 - landing / explanation layer
@@ -17,8 +17,8 @@
 - `src/firestore.ts` — Firebase persistence and storage upload helpers
 
 ## State approach
-Use React state with a local sample snapshot by default.
-When a user signs in, the same workspace model saves through Firebase.
+Use React state with an empty workspace by default.
+When a user signs in, the workspace model loads from Firebase and can auto-seed one sample workspace for first-run onboarding.
 
 ## Deployment approach
 - `pnpm build` emits the static SPA plus generated blog content into `dist/`

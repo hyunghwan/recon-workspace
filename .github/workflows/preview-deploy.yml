@@ -7,7 +7,7 @@ jobs:
   preview:
     runs-on: ubuntu-latest
     env:
-      SITE_ORIGIN: https://your-firebase-project-id.web.app
+      SITE_ORIGIN: https://reconcile.sqncs.com
       FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
     steps:
       - uses: actions/checkout@v4

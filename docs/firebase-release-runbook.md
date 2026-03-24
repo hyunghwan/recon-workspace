@@ -12,13 +12,13 @@ Recon Workspace ships from this repository to Firebase Hosting project `your-fir
 - App Check enforcement remains deferred in this release
 
 ## Canonical public origin
-- Live origin: `https://your-firebase-project-id.web.app`
-- Authorized fallback: `https://your-firebase-project-id.firebaseapp.com`
+- Live origin: `https://reconcile.sqncs.com`
+- Authorized auth fallback: `https://your-firebase-project-id.firebaseapp.com`
 
 Keep both domains authorized in Firebase Authentication settings. The release build must use:
 
 ```bash
-SITE_ORIGIN=https://your-firebase-project-id.web.app
+SITE_ORIGIN=https://reconcile.sqncs.com
 ```
 
 ## Required verification gate
@@ -78,8 +78,8 @@ If `preprod` is no longer the last known-good build, re-run preview deploy from 
 ## Pre-deploy checklist
 - Firebase CLI is authenticated as the release operator
 - Active project is `your-firebase-project-id`
-- `SITE_ORIGIN=https://your-firebase-project-id.web.app`
-- Auth authorized domains include `your-firebase-project-id.web.app`
+- `SITE_ORIGIN=https://reconcile.sqncs.com`
+- Auth authorized domains include `reconcile.sqncs.com`
 - Auth authorized domains include `your-firebase-project-id.firebaseapp.com`
 - `pnpm release:verify` passed without overrides
 - No planned schema or data migration is bundled with this release
