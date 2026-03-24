@@ -16,7 +16,7 @@ This repository contains:
 - local sample workspaces and local persistence
 - Firebase Auth + Firestore + Storage integration for pilot users
 - sample CSV templates in `/public`
-- a Vercel-ready front-end build
+- a Firebase Hosting-first front-end build
 
 ## Docs
 - `docs/vision.md`
@@ -29,6 +29,7 @@ This repository contains:
 - `docs/blog-operations-runbook.md`
 - `docs/firebase-setup.md`
 - `docs/firebase-hosting-note.md`
+- `docs/firebase-release-runbook.md`
 
 ## Local development
 ```bash
@@ -45,14 +46,23 @@ VITE_FIREBASE_APPCHECK_DEBUG=true
 
 ## Production build
 ```bash
-SITE_ORIGIN=https://your-domain.com
+SITE_ORIGIN=https://your-firebase-project-id.web.app
 pnpm build
 ```
 
 The blog build validates Markdown content, renders static pages into `dist/blog/`, and generates `sitemap.xml`, `rss.xml`, and `robots.txt`.
+The build fails fast when `SITE_ORIGIN` is missing or invalid, and release builds require the canonical origin above.
 
 ## Deployment
-This app is designed to deploy directly to Vercel as a static React/Vite project.
+This app is designed to deploy to Firebase Hosting in project `your-firebase-project-id`.
+
+Release verification and deploy entrypoints:
+
+```bash
+pnpm release:verify
+pnpm release:preview
+pnpm release:live
+```
 
 Firebase artifacts can be deployed with:
 
@@ -67,9 +77,13 @@ npx -y firebase-tools@latest deploy --only firestore:rules,firestore:indexes,sto
 ```
 
 For Google sign-in, use the Firebase Auth helper domain in `VITE_FIREBASE_AUTH_DOMAIN` (for this project: `your-firebase-project-id.firebaseapp.com`) unless you have explicitly configured and whitelisted a different `__/auth/handler` redirect URI.
+Confirm Firebase Authentication authorized domains include both `your-firebase-project-id.web.app` and `your-firebase-project-id.firebaseapp.com`.
+App Check enforcement is intentionally deferred in this production-hardening pass; only configure `VITE_FIREBASE_APPCHECK_SITE_KEY` when Storage App Check is already enabled for the project.
 
 If Firebase CLI management commands start failing with `Your credentials are no longer valid`, refresh them with:
 
 ```bash
 npx -y firebase-tools@latest login --reauth
 ```
+
+Rollback guidance lives in [docs/firebase-release-runbook.md](docs/firebase-release-runbook.md).

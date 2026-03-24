@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { currency } from '@/utils'
+import { currency, formatMonthLabel } from '@/utils'
 import { WorkspaceChecklistState } from './workspace-empty-states'
 import { useWorkspace } from './workspace-context'
 import { MatchBadge } from './workspace-shared'
@@ -28,13 +28,15 @@ export default function FollowUpPage() {
   }, [currentPeriodBundle])
   const unresolvedCount = unresolvedRows.length
   const hasMonthData = Boolean(currentPeriodBundle?.records.length)
+  const clientName = currentWorkspace?.workspace.name ?? 'this client'
+  const monthName = currentPeriodBundle ? formatMonthLabel(currentPeriodBundle.period.monthKey) : 'this month'
 
   if (!hasMonthData) {
     return (
       <WorkspaceChecklistState
         eyebrow="Nothing to send yet"
         title="Bring in files before you prepare follow-up."
-        description="This page stays focused on the items that are still open after review. Once files are in, the follow-up list will fill in automatically."
+        description={`This page stays focused on the items that are still open for ${clientName} after review. Once files are in for ${monthName}, the follow-up list will fill in automatically.`}
         primaryAction={importPath ? { label: 'Bring in files', href: importPath } : undefined}
         secondaryAction={{
           label: 'Create month',
@@ -70,8 +72,8 @@ export default function FollowUpPage() {
     return (
       <WorkspaceChecklistState
         eyebrow="Nothing to send yet"
-        title="This month is clear for now."
-        description="There are no open follow-up items at the moment. If something changes, it will appear here automatically."
+        title={`${monthName} is clear for now.`}
+        description={`There are no open follow-up items for ${clientName} at the moment. If something changes, it will appear here automatically.`}
         primaryAction={reviewPath ? { label: 'Back to review', href: reviewPath } : undefined}
         steps={[
           {
@@ -99,10 +101,10 @@ export default function FollowUpPage() {
             Follow-up
           </p>
           <h2 className="text-lg font-semibold tracking-tight text-[#102d28]">
-            Open items ready to send
+            Open items ready to send for {clientName}
           </h2>
           <p className="text-sm leading-6 text-[#617a73]">
-            Review the list before you send it, then export only the transactions that still need a document, clarification, or another decision.
+            Review the list for {monthName} before you send it, then export only the transactions that still need a document, clarification, or another decision.
           </p>
         </div>
 
@@ -133,7 +135,7 @@ export default function FollowUpPage() {
         <section className="min-w-0 xl:min-h-0 xl:overflow-y-auto">
           <div className="border-b border-[#e5ece9] px-5 py-4">
             <p className="text-sm leading-6 text-[#617a73]">
-              Only the transactions that still need follow-up are included here, so the handoff stays focused and easier to explain.
+              Only the transactions that still need follow-up for {monthName} are included here, so the handoff stays focused and easier to explain.
             </p>
           </div>
 
@@ -163,7 +165,7 @@ export default function FollowUpPage() {
           <div className="border-b border-[#e5ece9] px-5 py-4">
             <h3 className="text-sm font-medium tracking-tight text-[#102d28]">Follow-up draft</h3>
             <p className="mt-1 text-sm leading-6 text-[#617a73]">
-              Review the text below before you export or paste it into your email thread.
+              Review the text below before you export it or paste it into the client thread for {monthName}.
             </p>
           </div>
           <ScrollArea className="xl:min-h-0 xl:flex-1">

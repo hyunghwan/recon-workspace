@@ -14,8 +14,14 @@ import {
   indexedDBLocalPersistence,
   initializeAuth,
 } from 'firebase/auth'
-import { getFirestore } from 'firebase/firestore'
-import { getStorage } from 'firebase/storage'
+import {
+  connectFirestoreEmulator,
+  getFirestore,
+} from 'firebase/firestore'
+import {
+  connectStorageEmulator,
+  getStorage,
+} from 'firebase/storage'
 
 function normalizeEnvValue(value: string | undefined) {
   const normalized = value?.trim()
@@ -25,6 +31,14 @@ function normalizeEnvValue(value: string | undefined) {
 function parseBooleanEnv(value: string | undefined) {
   const normalized = value?.trim().toLowerCase()
   return normalized === '1' || normalized === 'true' || normalized === 'yes' || normalized === 'on'
+}
+
+function parseIntegerEnv(value: string | undefined) {
+  const normalized = value?.trim()
+  if (!normalized) return null
+
+  const parsed = Number.parseInt(normalized, 10)
+  return Number.isFinite(parsed) ? parsed : null
 }
 
 const baseFirebaseConfig = {
@@ -41,6 +55,10 @@ const firebaseConfig = {
 }
 
 const firebaseAppCheckSiteKey = normalizeEnvValue(import.meta.env.VITE_FIREBASE_APPCHECK_SITE_KEY)
+const firestoreEmulatorHost = normalizeEnvValue(import.meta.env.VITE_FIREBASE_FIRESTORE_EMULATOR_HOST)
+const firestoreEmulatorPort = parseIntegerEnv(import.meta.env.VITE_FIREBASE_FIRESTORE_EMULATOR_PORT)
+const storageEmulatorHost = normalizeEnvValue(import.meta.env.VITE_FIREBASE_STORAGE_EMULATOR_HOST)
+const storageEmulatorPort = parseIntegerEnv(import.meta.env.VITE_FIREBASE_STORAGE_EMULATOR_PORT)
 
 export const isFirebaseConfigured = Boolean(
   firebaseConfig.apiKey &&
@@ -88,6 +106,7 @@ function createAppCheck(): AppCheck | null {
 
 function createAuth() {
   if (!firebaseApp) return null
+  if (typeof window === 'undefined') return null
 
   try {
     return initializeAuth(firebaseApp, {
@@ -109,6 +128,14 @@ export const firestore = firebaseApp ? getFirestore(firebaseApp) : null
 export const firebaseAppCheck = createAppCheck()
 export const isAppCheckConfigured = Boolean(firebaseAppCheck)
 export const firebaseStorage = firebaseApp ? getStorage(firebaseApp) : null
+
+if (firestore && firestoreEmulatorHost && firestoreEmulatorPort) {
+  connectFirestoreEmulator(firestore, firestoreEmulatorHost, firestoreEmulatorPort)
+}
+
+if (firebaseStorage && storageEmulatorHost && storageEmulatorPort) {
+  connectStorageEmulator(firebaseStorage, storageEmulatorHost, storageEmulatorPort)
+}
 
 if (googleProvider) {
   googleProvider.setCustomParameters({

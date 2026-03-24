@@ -10,7 +10,13 @@
     "blog:check": "node scripts/blog-check.mjs",
     "blog:render": "node scripts/blog-render.mjs",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "vitest run tests/harness/config-baseline.test.ts",
+    "test:firebase": "bash scripts/test-firebase.sh",
+    "test:smoke": "bash scripts/test-smoke.sh",
+    "release:verify": "bash scripts/release-verify.sh",
+    "release:preview": "bash scripts/firebase-preview-deploy.sh",
+    "release:live": "bash scripts/firebase-live-deploy.sh"
   },
   "dependencies": {
     "@fontsource-variable/geist": "^5.2.8",
@@ -33,6 +39,8 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",
+    "@firebase/rules-unit-testing": "^5.0.0",
+    "@playwright/test": "^1.56.1",
     "@tailwindcss/vite": "^4.2.2",
     "@types/node": "^24.12.0",
     "@types/react": "^19.2.14",
@@ -46,6 +54,7 @@
     "tailwindcss": "^4.2.2",
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.57.0",
-    "vite": "^8.0.1"
+    "vite": "^8.0.1",
+    "vitest": "^4.0.7"
   }
 }

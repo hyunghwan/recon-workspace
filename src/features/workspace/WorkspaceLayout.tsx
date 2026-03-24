@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import {
   ArrowRight,
-  Cloud,
   Download,
   FolderPlus,
   LogIn,
@@ -79,6 +78,8 @@ export default function WorkspaceLayout() {
 
   const importsCount = currentPeriodBundle?.imports.length ?? 0
   const recordsCount = currentPeriodBundle?.period.recordCounts.total ?? 0
+  const currentWorkspaceName = currentWorkspace?.workspace.name ?? 'Choose a client'
+  const currentMonthName = currentPeriodBundle ? formatMonthLabel(currentPeriodBundle.period.monthKey) : 'Choose a month'
   const importPath = currentPage !== 'imports' ? buildCurrentPath('imports') : null
   const pageTitle =
     currentPage === 'imports'
@@ -108,7 +109,7 @@ export default function WorkspaceLayout() {
                     <div>
                       <p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">Client</p>
                       <p className="mt-1 text-sm font-medium tracking-tight text-foreground">
-                        {currentWorkspace?.workspace.name ?? 'No workspace selected'}
+                        {currentWorkspaceName}
                       </p>
                     </div>
                     <Button
@@ -215,7 +216,7 @@ export default function WorkspaceLayout() {
                     <div>
                       <p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">Month</p>
                       <p className="mt-1 text-sm font-medium tracking-tight text-foreground">
-                        {currentPeriodBundle ? formatMonthLabel(currentPeriodBundle.period.monthKey) : 'No month selected'}
+                        {currentMonthName}
                       </p>
                     </div>
                     <Button
@@ -330,12 +331,26 @@ export default function WorkspaceLayout() {
               </nav>
             </div>
 
-            <section className="mt-auto space-y-3 border border-[#e2e8e5] bg-white px-4 py-4">
+            <section className="mt-auto space-y-4 border border-[#e2e8e5] bg-white px-4 py-4">
               <div className="space-y-1">
-                <p className="text-sm font-medium tracking-tight text-[#102d28]">This month at a glance</p>
+                <p className="text-sm font-medium tracking-tight text-[#102d28]">Current work record</p>
                 <p className="text-xs leading-5 text-[#617a73]">
-                  Keep the open work visible while you move between files, review, and follow-up.
+                  Pick a client first, choose the month you are closing, then move through files, review, and follow-up.
                 </p>
+              </div>
+              <div className="space-y-3 rounded-xl border border-[#e2e8e5] bg-[#fafcfb] p-3">
+                <ContextRow label="Client" value={currentWorkspaceName} />
+                <ContextRow label="Month" value={currentMonthName} />
+                <ContextRow
+                  label="Workflow"
+                  value={
+                    currentPage === 'imports'
+                      ? 'Files'
+                      : currentPage === 'follow-up'
+                        ? 'Follow-up'
+                        : 'Review'
+                  }
+                />
               </div>
               <div className="grid gap-0 divide-y divide-[#e2e8e5] rounded-xl border border-[#e2e8e5] bg-[#fafcfb] sm:grid-cols-2 sm:divide-x sm:divide-y-0 lg:grid-cols-1 lg:divide-x-0 lg:divide-y">
                 <SidebarMetric label="Need review" value={stats?.ambiguous ?? 0} />
@@ -348,10 +363,10 @@ export default function WorkspaceLayout() {
             <div className="flex flex-wrap gap-2">
               <Button variant="outline" className="rounded-lg border-[#dce4e1] bg-white" onClick={handleLoadSampleSnapshot}>
                 <RefreshCcw />
-                Load sample
+                Open example client
               </Button>
               <Button asChild variant="ghost" className="rounded-lg text-muted-foreground">
-                <Link to="/">Marketing site</Link>
+                <Link to="/">View home page</Link>
               </Button>
             </div>
           </div>
@@ -362,9 +377,9 @@ export default function WorkspaceLayout() {
             <div className="flex flex-col gap-4 px-4 py-4 sm:px-6 lg:flex-row lg:items-end lg:justify-between lg:px-8">
               <div className="space-y-2">
                 <div className="flex flex-wrap items-center gap-2 text-[11px] font-medium uppercase tracking-[0.16em] text-[#68817a]">
-                  <span>{currentWorkspace?.workspace.name ?? 'Workspace'}</span>
+                  <span>{currentWorkspaceName}</span>
                   <span className="text-[#9aacaa]">/</span>
-                  <span>{currentPeriodBundle ? formatMonthLabel(currentPeriodBundle.period.monthKey) : 'No month selected'}</span>
+                  <span>{currentMonthName}</span>
                 </div>
                 <div className="flex flex-col gap-2 lg:flex-row lg:items-baseline lg:justify-between">
                   <h1 className="font-heading text-2xl font-semibold tracking-[-0.03em] text-foreground sm:text-3xl">
@@ -428,22 +443,21 @@ export default function WorkspaceLayout() {
 
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-[#617a73]">
                   <div className="inline-flex items-center gap-1.5">
-                    <Cloud aria-hidden="true" className="size-3.5" />
                     {loadingCloud
-                      ? 'Loading synced workspace...'
+                      ? 'Loading saved client records...'
                       : userSignedIn
                         ? userEmail ?? 'Signed in'
-                        : 'Sample mode'}
+                        : 'Example client loaded'}
                   </div>
                   <div className="inline-flex items-center gap-1.5">
                     <ShieldCheck aria-hidden="true" className="size-3.5" />
                     {!cloudEnabled
-                      ? 'Firebase not configured'
+                      ? 'Sign-in setup incomplete'
                       : !authReady
-                        ? 'Checking session...'
+                        ? 'Checking sign-in status...'
                         : userSignedIn
-                          ? 'Cloud sync available'
-                          : 'Demo workspace active'}
+                          ? 'Changes save to your account'
+                          : 'Sign in to save and upload files'}
                   </div>
                 </div>
 
@@ -470,6 +484,15 @@ function SidebarMetric({ label, value }: { label: string; value: number }) {
     <div className="flex items-end justify-between px-3 py-3">
       <p className="text-sm text-[#617a73]">{label}</p>
       <p className="text-lg font-semibold tracking-tight text-[#102d28] [font-variant-numeric:tabular-nums]">{value}</p>
+    </div>
+  )
+}
+
+function ContextRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-start justify-between gap-3">
+      <p className="text-[11px] uppercase tracking-[0.14em] text-[#617a73]">{label}</p>
+      <p className="text-right text-sm font-medium tracking-tight text-[#102d28]">{value}</p>
     </div>
   )
 }

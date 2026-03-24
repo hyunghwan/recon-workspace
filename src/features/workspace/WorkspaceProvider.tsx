@@ -271,15 +271,17 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         if (cloudSnapshot.workspaces.length) {
           setSnapshot(cloudSnapshot)
           setSelectedPeriodIdByWorkspace((current) => buildPeriodSelectionMap(cloudSnapshot, current))
-          setCloudMessage(`Loaded ${cloudSnapshot.workspaces.length} client workspace${cloudSnapshot.workspaces.length > 1 ? 's' : ''} from Firebase.`)
+          setCloudMessage(
+            `Loaded ${cloudSnapshot.workspaces.length} client ${cloudSnapshot.workspaces.length > 1 ? 'records' : 'record'} from your saved workspace.`,
+          )
         } else {
           setSnapshot(cloudSnapshot)
           setSelectedPeriodIdByWorkspace({})
-          setCloudMessage('Signed in. Create a client workspace or import a CSV to start saving your work.')
+          setCloudMessage('Signed in. Create your first client and month to start saving work here.')
         }
       } catch (error) {
         const message = error instanceof Error ? error.message : 'Unknown cloud load error'
-        setCloudMessage(`Cloud load error: ${message}`)
+        setCloudMessage(`Could not load your saved workspace: ${message}`)
       } finally {
         if (!cancelled) {
           setLoadingCloud(false)
@@ -382,7 +384,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     const importPath = buildCurrentPath('imports') ?? buildDefaultPath('imports')
     const currentPath = `${location.pathname}${location.search}${location.hash}`
 
-    setCloudMessage('Signed in. Choose a file type and upload your CSV.')
+    setCloudMessage('Signed in. Choose a file type and upload the CSV for this month.')
 
     if (importPath && currentPath !== importPath) {
       navigate(importPath, { replace: true })
@@ -412,10 +414,10 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     try {
       setSyncing(true)
       await task()
-      setCloudMessage(`${successMessage} Synced to Firebase.`)
+      setCloudMessage(`${successMessage} Saved to your account.`)
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown cloud save error'
-      setCloudMessage(`Cloud save error: ${message}`)
+      setCloudMessage(`Could not save your latest changes: ${message}`)
     } finally {
       setSyncing(false)
     }
@@ -524,7 +526,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
         [currentWorkspace.workspace.id]: existing.period.id,
       }))
       setShowNewPeriodForm(false)
-      setCloudMessage(`${formatMonthLabel(monthKey)} already exists for this workspace.`)
+      setCloudMessage(`${formatMonthLabel(monthKey)} is already on this client. Open that month to keep working.`)
       navigate(buildAppPath(currentWorkspace.workspace.id, existing.period.id, currentPage))
       return
     }
@@ -568,12 +570,12 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
 
   async function handleImportBatch(input: { file: File | null; form: ImportFormState }) {
     if (!currentWorkspace || !currentRawPeriodBundle || !input.file) {
-      setCloudMessage('Choose a file, client, and month before importing.')
+      setCloudMessage('Choose a client, month, and CSV before importing.')
       return
     }
 
     if (!cloudEnabled || !user) {
-      setCloudMessage('Sign in with Google to upload original CSV files into Firebase Storage.')
+      setCloudMessage('Sign in to upload original CSV files for this client month.')
       return
     }
 
@@ -594,7 +596,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       })
 
       if (parsedImport.duplicateOfImportId) {
-        setCloudMessage(`Duplicate skipped. This file matches import ${parsedImport.duplicateOfImportId}.`)
+        setCloudMessage(`This CSV matches an existing upload for the month, so it was skipped.`)
         return
       }
 
@@ -639,7 +641,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       }
 
       const message = error instanceof Error ? error.message : 'Unknown import error'
-      setCloudMessage(`Import error: ${message}`)
+      setCloudMessage(`Could not finish the import: ${message}`)
     } finally {
       setImporting(false)
     }
@@ -718,7 +720,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   async function handleManualMatch(input: { note?: string; recordIds: string[] }) {
     if (!currentWorkspace || !currentRawPeriodBundle) return
     if (input.recordIds.length < 2) {
-      setCloudMessage('Select at least two records before creating a manual match.')
+      setCloudMessage('Select at least two records before marking them as a manual match.')
       return
     }
 
@@ -780,21 +782,21 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
 
   async function handleManualSave() {
     if (!user) {
-      setCloudMessage('Sign in first if you want to sync workspaces to Firebase.')
+      setCloudMessage('Sign in first if you want to save changes to your account.')
       return
     }
 
-    await persistCloudTask(() => saveReconSnapshot(user.uid, snapshot), 'Snapshot synced.')
+    await persistCloudTask(() => saveReconSnapshot(user.uid, snapshot), 'Latest client and month changes are up to date.')
   }
 
   async function handleDirectSignIn() {
     if (!cloudEnabled) {
-      setCloudMessage('Firebase is not configured yet. Sample workspaces still load locally.')
+      setCloudMessage('Sign-in is not configured yet, so only the example client is available.')
       return
     }
 
     try {
-      setCloudMessage('Signing in with Google…')
+      setCloudMessage('Opening Google sign-in…')
       await beginGoogleSignIn({
         mode: 'default',
         returnTo: `${location.pathname}${location.search}${location.hash}`,
@@ -806,12 +808,12 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
 
   async function handleImportSignIn() {
     if (!cloudEnabled) {
-      setCloudMessage('Firebase is not configured yet. Sample workspaces still load locally.')
+      setCloudMessage('Sign-in is not configured yet, so uploads are unavailable.')
       return
     }
 
     try {
-      setCloudMessage('Sign in to upload and store original CSV files.')
+      setCloudMessage('Sign in to upload and keep the original CSV files with this month.')
       await beginGoogleSignIn({
         mode: 'import',
         returnTo: buildCurrentPath('imports') ?? `${location.pathname}${location.search}${location.hash}`,
@@ -828,7 +830,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     applySnapshot(sampleSnapshot)
     setShowNewPeriodForm(false)
     setShowNewWorkspaceForm(false)
-    setCloudMessage('Signed out. Restored the sample workspace.')
+    setCloudMessage('Signed out. The example client is ready if you want to keep exploring the workflow.')
     const nextPath = buildSnapshotDefaultPath(sampleSnapshot, 'queue')
     if (nextPath) {
       navigate(nextPath)
@@ -840,7 +842,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     applySnapshot(sampleSnapshot)
     setShowNewPeriodForm(false)
     setShowNewWorkspaceForm(false)
-    setCloudMessage('Loaded the sample workspace.')
+    setCloudMessage('Example client opened. You can review the client, month, and workflow before connecting your own data.')
     const nextPath = buildSnapshotDefaultPath(sampleSnapshot, currentPage)
     if (nextPath) {
       navigate(nextPath)

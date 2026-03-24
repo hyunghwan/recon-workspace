@@ -23,6 +23,7 @@ import { cn } from '@/lib/utils'
 import type { MatchStatus, QueueView, SourceType } from '@/types'
 import {
   currency,
+  formatMonthLabel,
   resolvePrimaryAmount,
   sourceTypeLabel,
   sourceTypeOrder,
@@ -51,6 +52,8 @@ export default function QueuePage() {
   const [searchParams, setSearchParams] = useSearchParams()
   const [selectedMatchIds, setSelectedMatchIds] = useState<string[]>([])
   const [manualMatchNote, setManualMatchNote] = useState('')
+  const clientName = currentWorkspace?.workspace.name ?? 'this client'
+  const monthName = currentPeriodBundle ? formatMonthLabel(currentPeriodBundle.period.monthKey) : 'this month'
 
   const importPath = buildCurrentPath('imports')
   const search = searchParams.get('q') ?? ''
@@ -120,7 +123,7 @@ export default function QueuePage() {
       <WorkspaceChecklistState
         eyebrow="This month is still empty"
         title="Bring in the files for this close month first."
-        description="Once you import the statement, payout export, or supporting files, the review list will fill in here and the follow-up page will stay in step."
+        description={`Once you import the statement, payout export, or supporting files for ${monthName}, the review list for ${clientName} will fill in here and the follow-up page will stay in step.`}
         primaryAction={importPath ? { label: 'Bring in files', href: importPath } : undefined}
         secondaryAction={{
           label: 'Create month',
@@ -205,7 +208,7 @@ export default function QueuePage() {
               <div className="space-y-1">
                 <h2 className="text-base font-semibold tracking-tight text-[#102d28]">Review</h2>
                 <p className="max-w-2xl text-sm leading-6 text-[#617a73]">
-                  Filter the month by project, account, file type, or search term while you work through the open items.
+                  Filter {clientName} for {monthName} by project, account, file type, or search term while you work through the open items.
                 </p>
               </div>
               <div className="flex flex-wrap items-center gap-2">

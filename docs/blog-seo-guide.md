@@ -17,6 +17,7 @@
 - Meta description length: 140-160 characters
 - Excerpt length: 90-220 characters
 - One canonical URL per article using `SITE_ORIGIN + /blog/<slug>/`
+- Release canonical origin is `https://your-firebase-project-id.web.app`
 - Page title format: `<Article Title> | Recon Workspace`
 
 ## Structure rules

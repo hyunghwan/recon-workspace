@@ -16,9 +16,12 @@ VITE_FIREBASE_PROJECT_ID=
 VITE_FIREBASE_STORAGE_BUCKET=
 VITE_FIREBASE_MESSAGING_SENDER_ID=
 VITE_FIREBASE_APP_ID=
+SITE_ORIGIN=https://your-firebase-project-id.web.app
 VITE_FIREBASE_APPCHECK_SITE_KEY=
 VITE_FIREBASE_APPCHECK_DEBUG=
 ```
+
+For release builds, `SITE_ORIGIN` must stay pinned to `https://your-firebase-project-id.web.app` so generated canonical URLs, Open Graph tags, RSS, and sitemap output are deterministic.
 
 The live Firebase Hosting config for this project currently publishes `storageBucket=your-firebase-project-id.firebasestorage.app`, so local and deployed env values should match that exact bucket name.
 
@@ -27,7 +30,7 @@ The live Firebase Hosting config for this project currently publishes `storageBu
 2. Add a web app
 3. Enable Authentication > Google
 4. Keep `your-firebase-project-id.firebaseapp.com` as the Firebase Auth helper domain unless you have explicitly whitelisted another `__/auth/handler` redirect URI in Google OAuth configuration
-5. Add both `your-firebase-project-id.firebaseapp.com` and `your-firebase-project-id.web.app` to Authentication > Settings > Authorized domains
+5. Verify both `your-firebase-project-id.web.app` and `your-firebase-project-id.firebaseapp.com` are present in Authentication > Settings > Authorized domains
 6. Enable Firestore Database
 7. Enable Firebase Storage and click `Get Started`
 8. Copy config values into `.env.local`
@@ -56,15 +59,17 @@ The project includes:
 After `firebase login` and after setting the correct project id in `.firebaserc`:
 
 ```bash
-pnpm build
-npx -y firebase-tools@latest deploy --only firestore:rules,firestore:indexes --project your-firebase-project-id
+pnpm release:verify
+npx -y firebase-tools@latest hosting:channel:deploy preprod --project your-firebase-project-id
 ```
 
-After Firebase Storage has been initialized in the console, deploy storage rules too:
+After preview verification succeeds, perform the live release:
 
 ```bash
 npx -y firebase-tools@latest deploy --only firestore:rules,firestore:indexes,storage --project your-firebase-project-id
 ```
+
+For the full command sequence, rollback flow, and no-migration release guardrails, use `docs/firebase-release-runbook.md`.
 
 If CLI management commands fail because the cached login expired, reauthenticate before inspecting live project settings:
 

@@ -1,17 +1,25 @@
-# Firebase Hosting vs Vercel
+# Firebase Hosting Release Notes
 
-Recon Workspace can be hosted entirely on Firebase.
+Recon Workspace now releases through Firebase Hosting, not a Vercel-first path.
 
-## Firebase-only stack
-- Hosting: Firebase Hosting
-- Auth: Firebase Auth (Google)
-- DB: Firestore
+## Production release shape
+- Static SPA hosted from `dist/`
+- Canonical public origin: `https://your-firebase-project-id.web.app`
+- Secondary authorized domain: `https://your-firebase-project-id.firebaseapp.com`
+- Firebase Auth for Google sign-in
+- Firestore for workspace and month data
+- Firebase Storage for original CSV uploads
 
-## Why this is a good fit right now
-- simple stack
-- one console
-- native Google sign-in support
-- enough for an MVP with a React front-end and basic persistence
+## Why the Firebase-first path stays in place
+- Hosting, Auth, Firestore, and Storage stay in one project
+- Preview channels let us verify the same production project before a live deploy
+- The current app is a static React/Vite build, so Firebase Hosting matches the shipped architecture
 
-## When to reconsider later
-If the product grows into heavier workflow automation, server-side parsing, or more complex reporting, we can revisit backend architecture. But for the current MVP, Firebase is enough.
+## Release discipline
+- Run `pnpm release:verify` before preview or live deploy
+- Use `pnpm release:preview` for the pre-live channel
+- Use `pnpm release:live` only after the preview result is acceptable
+- Use `firebase hosting:clone` with a known good `VERSION_ID` for Hosting rollback
+
+## Deferred decision
+Cloud Storage App Check enforcement is documented but not newly enabled in this hardening pass.

@@ -2,6 +2,7 @@ import fs from 'node:fs/promises'
 import path from 'node:path'
 
 import {
+  CANONICAL_SITE_ORIGIN,
   distDir,
   getSiteOrigin,
   loadPosts,
@@ -13,8 +14,9 @@ import {
 } from './blog-lib.mjs'
 
 async function main() {
-  const strictSiteOrigin = process.env.CI === 'true' || Boolean(process.env.VERCEL) || Boolean(process.env.FIREBASE_DEPLOY)
-  const siteOrigin = getSiteOrigin({ strict: strictSiteOrigin })
+  const isReleaseBuild =
+    process.env.npm_lifecycle_event === 'build' || process.env.CI === 'true' || process.env.FIREBASE_DEPLOY === 'true'
+  const siteOrigin = getSiteOrigin({ strict: isReleaseBuild, enforceCanonical: isReleaseBuild })
   const posts = await loadPosts()
   const blogDir = path.join(distDir, 'blog')
 
@@ -31,11 +33,8 @@ async function main() {
   await fs.writeFile(path.join(distDir, 'rss.xml'), renderRssFeed(posts, siteOrigin))
   await fs.writeFile(path.join(distDir, 'robots.txt'), renderRobots(siteOrigin))
 
-  if (!process.env.SITE_ORIGIN && siteOrigin.startsWith('http://localhost')) {
-    console.warn(`SITE_ORIGIN not set. Blog metadata was rendered with ${siteOrigin}. Set SITE_ORIGIN for production builds.`)
-  }
-
-  console.log(`Rendered ${posts.length} blog article(s) into dist/blog.`)
+  const releaseNote = isReleaseBuild ? ` (canonical origin: ${CANONICAL_SITE_ORIGIN})` : ''
+  console.log(`Rendered ${posts.length} blog article(s) into dist/blog.${releaseNote}`)
 }
 
 main().catch((error) => {

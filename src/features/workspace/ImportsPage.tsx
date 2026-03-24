@@ -20,7 +20,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import type { ImportFormState, SourceType } from '@/types'
-import { sourceTypeLabel, sourceTypeOrder } from '@/utils'
+import { formatMonthLabel, sourceTypeLabel, sourceTypeOrder } from '@/utils'
 import { WorkspaceChecklistState } from './workspace-empty-states'
 import { useWorkspace } from './workspace-context'
 import { SourceBadge } from './workspace-shared'
@@ -30,6 +30,7 @@ export default function ImportsPage() {
   const {
     cloudEnabled,
     currentPeriodBundle,
+    currentWorkspace,
     handleImportBatch,
     handleImportSignIn,
     handleLoadSampleSnapshot,
@@ -40,6 +41,8 @@ export default function ImportsPage() {
   const [importForm, setImportForm] = useState<ImportFormState>(defaultImportForm)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const fileInputRef = useRef<HTMLInputElement | null>(null)
+  const clientName = currentWorkspace?.workspace.name ?? 'this client'
+  const monthName = currentPeriodBundle ? formatMonthLabel(currentPeriodBundle.period.monthKey) : 'this month'
 
   return (
     <div className="grid gap-4 lg:flex-1 lg:min-h-0 xl:h-full xl:grid-cols-[minmax(0,0.86fr)_minmax(0,1.14fr)]">
@@ -49,10 +52,10 @@ export default function ImportsPage() {
             Files {'->'} Review
           </p>
           <h2 className="text-lg font-semibold tracking-tight text-[#102d28]">
-            Bring in the files for this month
+            Bring in files for {clientName}
           </h2>
           <p className="text-sm leading-6 text-[#617a73]">
-            Choose the file type, attach the CSV, and add it to the current month so review stays tied to the same work.
+            Choose the file type, attach the CSV, and add it to {monthName} so review stays tied to the same close record.
           </p>
         </div>
 
@@ -80,7 +83,7 @@ export default function ImportsPage() {
               <Lock className="mt-0.5 size-4 shrink-0" />
               <div className="space-y-3">
                 <p>
-                  Importing original CSV files still requires Google sign-in because files are stored in Firebase Storage.
+                  Uploading original CSV files for {clientName} still requires Google sign-in so the files stay attached to {monthName}.
                 </p>
                 <Button
                   variant="outline"
@@ -98,7 +101,7 @@ export default function ImportsPage() {
 
         {!cloudEnabled && (
           <div className="border-b border-[#e5ece9] bg-[#fafcfb] px-5 py-4 text-sm text-[#617a73]">
-            Firebase is not configured yet. You can browse sample workspaces, but live upload remains disabled.
+            Sign-in is not configured yet. You can still explore the example client, but live uploads remain disabled.
           </div>
         )}
 
@@ -195,8 +198,8 @@ export default function ImportsPage() {
 
           <div className="grid gap-3 border-t border-[#e5ece9] pt-4 text-sm leading-6 text-[#617a73] sm:grid-cols-3">
             <p>Statement, payout, and supporting files all stay attached to the same month.</p>
-            <p>Project and account details stay with the file so filtering still works later.</p>
-            <p>Review and follow-up always point back to the original uploaded files.</p>
+            <p>Project and account details stay with the file so filtering still works later in review.</p>
+            <p>Review and follow-up always point back to the original uploaded files for {clientName}.</p>
           </div>
         </div>
       </section>
@@ -206,7 +209,7 @@ export default function ImportsPage() {
           <div>
             <h2 className="text-lg font-semibold tracking-tight text-[#102d28]">Files in this month</h2>
             <p className="mt-1 text-sm leading-6 text-[#617a73]">
-              Review and follow-up both pull from the same monthly file list.
+              Review and follow-up both pull from the same file list for {monthName}.
             </p>
           </div>
           <p className="text-sm text-[#617a73]">

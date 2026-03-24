@@ -1,7 +1,7 @@
 # Recon Workspace — Project Status
 
 ## Current status
-Active MVP build in progress.
+Production-hardening release candidate for Firebase Hosting.
 
 ## Done
 - Initial product direction chosen: reconciliation workspace for bookkeepers and small finance teams
@@ -9,22 +9,22 @@ Active MVP build in progress.
 - Firebase-only stack selected
 - Firebase Hosting deployed
 - Firestore rules/indexes deployed
-- React MVP built with CSV import, statuses, notes, unresolved export, and local persistence
+- React workspace built with CSV import, statuses, notes, unresolved export, and local persistence
 - Landing page shifted toward customer-facing messaging
 - UI switched to light mode and mobile layout improved
+- Google sign-in works with Firebase Auth
+- Cloud-backed save/load works with Firestore and Storage
+- Workspace shell now frames work as client -> month -> workflow
+- Local verification now covers lint, build, unit tests, Firebase emulator regression, and hosting smoke
 
 ## In progress
-- Fix Google sign-in flow end-to-end
-- Polish cloud save / cloud load UX
-- Reduce remaining dev-facing language from the product experience
+- Preview deploy verification and live release execution for the current hardening branch
 
 ## Next
-- Add empty states and better first-time onboarding
-- Add create/delete transaction actions
-- Separate marketing landing from app workspace
-- Add waitlist / lead capture flow
-- Improve performance / reduce bundle size
+- Monitor preview/live release behavior on `your-firebase-project-id`
+- Decide whether App Check enforcement should be enabled after release
+- Continue bundle-size and performance cleanup
 
 ## Known blockers
 - GitHub Projects cannot be updated directly from current token due to permission limits
-- Google sign-in may still require Firebase console configuration checks (provider + authorized domain)
+- No active product blocker. Release safety depends on keeping both Firebase Auth authorized domains configured.

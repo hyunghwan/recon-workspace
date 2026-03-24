@@ -18,6 +18,8 @@ export const BLOG_TITLE = `${BRAND_NAME} Blog`
 export const BLOG_DESCRIPTION =
   'Practical reconciliation guides for bookkeepers, month-end close teams, and operators who need a cleaner workflow around missing support and unresolved items.'
 export const DEFAULT_SITE_ORIGIN = 'http://localhost:4173'
+export const CANONICAL_SITE_ORIGIN = 'https://your-firebase-project-id.web.app'
+export const SECONDARY_AUTHORIZED_ORIGIN = 'https://your-firebase-project-id.firebaseapp.com'
 export const BLOG_STYLESHEET_PATH = '/blog/blog.css'
 export const CTA = {
   title: 'See the workflow in context',
@@ -31,12 +33,12 @@ marked.use({
   breaks: false,
 })
 
-export function getSiteOrigin({ strict = false } = {}) {
+export function getSiteOrigin({ strict = false, enforceCanonical = false } = {}) {
   const raw = resolveSiteOriginEnv()
 
   if (!raw) {
     if (strict) {
-      throw new Error('SITE_ORIGIN is required for this build environment.')
+      throw new Error(`SITE_ORIGIN is required. Set SITE_ORIGIN=${CANONICAL_SITE_ORIGIN} for release builds.`)
     }
     return DEFAULT_SITE_ORIGIN
   }
@@ -52,24 +54,15 @@ export function getSiteOrigin({ strict = false } = {}) {
     throw new Error('SITE_ORIGIN must use http or https.')
   }
 
+  if (enforceCanonical && parsed.origin !== CANONICAL_SITE_ORIGIN) {
+    throw new Error(`Release builds must use SITE_ORIGIN=${CANONICAL_SITE_ORIGIN}. Received ${parsed.origin}.`)
+  }
+
   return parsed.origin
 }
 
 function resolveSiteOriginEnv() {
-  const direct = process.env.SITE_ORIGIN?.trim()
-  if (direct) return direct
-
-  const vercelUrl = process.env.VERCEL_URL?.trim()
-  if (vercelUrl) {
-    return vercelUrl.startsWith('http') ? vercelUrl : `https://${vercelUrl}`
-  }
-
-  const vercelProductionUrl = process.env.VERCEL_PROJECT_PRODUCTION_URL?.trim()
-  if (vercelProductionUrl) {
-    return vercelProductionUrl.startsWith('http') ? vercelProductionUrl : `https://${vercelProductionUrl}`
-  }
-
-  return ''
+  return process.env.SITE_ORIGIN?.trim() ?? ''
 }
 
 export async function loadPosts({ includeDrafts = false } = {}) {
