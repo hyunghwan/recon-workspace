@@ -28,7 +28,7 @@ export declare const BRAND_DESCRIPTION: string
 export declare const BLOG_TITLE: string
 export declare const BLOG_DESCRIPTION: string
 export declare const DEFAULT_SITE_ORIGIN: string
-export declare const EXAMPLE_SITE_ORIGIN: string
+export declare const DEFAULT_PUBLIC_SITE_ORIGIN: string
 export declare const BLOG_STYLESHEET_PATH: string
 export declare const CTA: {
   title: string
@@ -37,7 +37,7 @@ export declare const CTA: {
   label: string
 }
 
-export declare function getSiteOrigin(options?: { strict?: boolean; enforceCanonical?: boolean }): string
+export declare function getSiteOrigin(options?: { strict?: boolean }): string
 export declare function loadPosts(options?: { includeDrafts?: boolean }): Promise<BlogPost[]>
 export declare function renderBlogIndex(posts: BlogPost[], siteOrigin: string): string
 export declare function renderPostPage(post: BlogPost, posts: BlogPost[], siteOrigin: string): string

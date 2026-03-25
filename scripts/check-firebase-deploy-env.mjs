@@ -13,7 +13,7 @@ if (!/^[a-z0-9-]+$/i.test(projectId)) {
   process.exit(1)
 }
 
-if (!/^[a-z0-9-]+$/i.test(previewChannel)) {
+if (!/^[a-z0-9_-]+$/i.test(previewChannel)) {
   console.error(`FIREBASE_PREVIEW_CHANNEL looks invalid: ${previewChannel}`)
   process.exit(1)
 }

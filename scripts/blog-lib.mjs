@@ -18,7 +18,7 @@ export const BLOG_TITLE = `${BRAND_NAME} Blog`
 export const BLOG_DESCRIPTION =
   'Practical reconciliation guides for bookkeepers, month-end close teams, and operators who need a cleaner workflow around missing support and unresolved items.'
 export const DEFAULT_SITE_ORIGIN = 'http://localhost:4173'
-export const EXAMPLE_SITE_ORIGIN = 'https://reconcile.sqncs.com'
+export const DEFAULT_PUBLIC_SITE_ORIGIN = 'https://reconcile.sqncs.com'
 export const BLOG_STYLESHEET_PATH = '/blog/blog.css'
 export const CTA = {
   title: 'See the workflow in context',
@@ -32,12 +32,12 @@ marked.use({
   breaks: false,
 })
 
-export function getSiteOrigin({ strict = false, enforceCanonical = false } = {}) {
+export function getSiteOrigin({ strict = false } = {}) {
   const raw = resolveSiteOriginEnv()
 
   if (!raw) {
     if (strict) {
-      throw new Error(`SITE_ORIGIN is required. Set it to your canonical public origin, for example ${EXAMPLE_SITE_ORIGIN}.`)
+      throw new Error(`SITE_ORIGIN is required. Set it to your canonical public origin, for example ${DEFAULT_PUBLIC_SITE_ORIGIN}.`)
     }
     return DEFAULT_SITE_ORIGIN
   }

@@ -33,12 +33,12 @@ test('gates workspace routes behind sign-in and still serves generated blog outp
   const artifactLines: string[] = []
 
   await page.goto('/app')
-  await expect(page.getByRole('heading', { name: 'Sign in to open your workspace' })).toBeVisible()
-  await expect(page.getByText('Delete the sample data')).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Sign in to open your clients' })).toBeVisible()
+  await expect(page.getByText('delete the sample data', { exact: false })).toBeVisible()
   await expect(page.getByText('Client', { exact: true })).toHaveCount(0)
 
   await page.goto(gatedQueuePath)
-  await expect(page.getByRole('heading', { name: 'Sign in to open your workspace' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Sign in to open your clients' })).toBeVisible()
   await page.screenshot({ path: `${evidenceDir}/task-5-app-signin-gate.png`, fullPage: true })
 
   gateLines.push('Unauthenticated /app route shows a dedicated sign-in gate.')
