@@ -18,8 +18,7 @@ export const BLOG_TITLE = `${BRAND_NAME} Blog`
 export const BLOG_DESCRIPTION =
   'Practical reconciliation guides for bookkeepers, month-end close teams, and operators who need a cleaner workflow around missing support and unresolved items.'
 export const DEFAULT_SITE_ORIGIN = 'http://localhost:4173'
-export const CANONICAL_SITE_ORIGIN = 'https://reconcile.sqncs.com'
-export const SECONDARY_AUTHORIZED_ORIGIN = 'https://your-firebase-project-id.firebaseapp.com'
+export const EXAMPLE_SITE_ORIGIN = 'https://reconcile.sqncs.com'
 export const BLOG_STYLESHEET_PATH = '/blog/blog.css'
 export const CTA = {
   title: 'See the workflow in context',
@@ -38,7 +37,7 @@ export function getSiteOrigin({ strict = false, enforceCanonical = false } = {})
 
   if (!raw) {
     if (strict) {
-      throw new Error(`SITE_ORIGIN is required. Set SITE_ORIGIN=${CANONICAL_SITE_ORIGIN} for release builds.`)
+      throw new Error(`SITE_ORIGIN is required. Set it to your canonical public origin, for example ${EXAMPLE_SITE_ORIGIN}.`)
     }
     return DEFAULT_SITE_ORIGIN
   }
@@ -54,8 +53,12 @@ export function getSiteOrigin({ strict = false, enforceCanonical = false } = {})
     throw new Error('SITE_ORIGIN must use http or https.')
   }
 
-  if (enforceCanonical && parsed.origin !== CANONICAL_SITE_ORIGIN) {
-    throw new Error(`Release builds must use SITE_ORIGIN=${CANONICAL_SITE_ORIGIN}. Received ${parsed.origin}.`)
+  if (strict && parsed.protocol !== 'https:') {
+    throw new Error('Release builds must use an https SITE_ORIGIN.')
+  }
+
+  if (strict && isLoopbackHost(parsed.hostname)) {
+    throw new Error('Release builds must use a public SITE_ORIGIN instead of localhost or a loopback address.')
   }
 
   return parsed.origin
@@ -63,6 +66,11 @@ export function getSiteOrigin({ strict = false, enforceCanonical = false } = {})
 
 function resolveSiteOriginEnv() {
   return process.env.SITE_ORIGIN?.trim() ?? ''
+}
+
+function isLoopbackHost(hostname) {
+  const normalized = hostname.trim().toLowerCase()
+  return normalized === 'localhost' || normalized === '127.0.0.1' || normalized === '::1'
 }
 
 export async function loadPosts({ includeDrafts = false } = {}) {

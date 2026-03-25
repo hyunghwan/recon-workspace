@@ -11,7 +11,7 @@ jobs:
   verify:
     runs-on: ubuntu-latest
     env:
-      SITE_ORIGIN: https://reconcile.sqncs.com
+      SITE_ORIGIN: ${{ vars.SITE_ORIGIN || 'https://reconcile.sqncs.com' }}
     steps:
       - uses: actions/checkout@v4
 

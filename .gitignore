@@ -11,9 +11,22 @@ node_modules
 dist
 dist-ssr
 *.local
+output
+tmp
+test-results
+playwright-report
+*.tgz
 
 # Firebase local state
 .firebase
+.firebaserc
+
+# Local tooling state
+.omx/
+.sisyphus/
+.vercel/
+firepit-log.txt
+firestore-debug.log
 
 # Editor directories and files
 .vscode/*

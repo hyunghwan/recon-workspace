@@ -1,90 +1,79 @@
 # Recon Workspace
 
-Recon Workspace is a reconciliation prep workspace for bookkeepers and small finance teams.
+Recon Workspace is a build-in-public reconciliation prep app for bookkeepers and small finance teams. It focuses on the messy layer before the books are clean: importing CSV batches, tracking unresolved items, attaching support, and preparing month-end follow-up.
 
-It focuses on the messy layer before the books are clean:
-- organizing work by workspace and monthly reconciliation period
-- importing statement, payout, and supporting-document CSV batches
-- matching normalized records with a deterministic reconciliation engine
-- tracking matched, ambiguous, unmatched, and exception queues
-- preparing a follow-up list before month-end close
+Live site: [https://reconcile.sqncs.com/](https://reconcile.sqncs.com/)
 
-## Current state
-This repository contains:
-- product docs in `/docs`
-- a React + TypeScript reconciliation UI
-- authenticated sample onboarding plus Firebase-backed workspace persistence
-- Firebase Auth + Firestore + Storage integration for pilot users
-- sample CSV templates in `/public`
-- a realistic monthly CSV fixture pack in `/public/fixtures`
-- a Firebase Hosting-first front-end build
+## What is in this repo
+- A React + TypeScript app with a marketing site, blog, and authenticated workspace shell
+- Firebase Auth, Firestore, and Storage integration for cloud-backed workspaces
+- Sample CSV templates and realistic fixture packs for month-end reconciliation flows
+- Product, growth, engineering, and operations docs kept in the open
 
-## Docs
-- `docs/vision.md`
-- `docs/mvp.md`
-- `docs/gtm.md`
-- `docs/architecture.md`
-- `docs/content-marketing.md`
-- `docs/seo-article-month-end-close.md`
-- `docs/blog-seo-guide.md`
-- `docs/blog-operations-runbook.md`
-- `docs/firebase-setup.md`
-- `docs/firebase-hosting-note.md`
-- `docs/firebase-release-runbook.md`
+## Core workflow
+- Organize work by client workspace and monthly reconciliation period
+- Import bank, card, payout, and support-document CSV batches
+- Review matched, ambiguous, unmatched, and exception queues
+- Track missing support and export follow-up lists before close
 
-## Local development
+## Stack
+- React 19
+- TypeScript
+- Vite
+- Firebase Auth, Firestore, Storage, and Hosting
+- Playwright and Vitest for verification
+
+## Quick start
 ```bash
 pnpm install
 pnpm dev
 ```
 
-If Cloud Storage App Check enforcement is enabled for the Firebase project, also set:
+The app can boot without Firebase configuration. In that mode, you can explore the marketing site and sample workspace, while sign-in and live uploads stay disabled.
+
+To enable Firebase-backed sign-in, sync, and uploads:
 
 ```bash
-VITE_FIREBASE_APPCHECK_SITE_KEY=
-VITE_FIREBASE_APPCHECK_DEBUG=true
+cp .env.example .env.local
 ```
 
-## Production build
-```bash
-SITE_ORIGIN=https://reconcile.sqncs.com
-pnpm build
-```
+Then fill in the Firebase web app values in `.env.local`.
 
-The blog build validates Markdown content, renders static pages into `dist/blog/`, and generates `sitemap.xml`, `rss.xml`, and `robots.txt`.
-The build fails fast when `SITE_ORIGIN` is missing or invalid, and release builds require the canonical origin above.
-
-## Deployment
-This app is designed to deploy to Firebase Hosting in project `your-firebase-project-id`.
-
-Release verification and deploy entrypoints:
+## Build and verify
+Release-style builds require a public `https` origin:
 
 ```bash
+SITE_ORIGIN=https://reconcile.sqncs.com pnpm build
 pnpm release:verify
-pnpm release:preview
-pnpm release:live
 ```
 
-Firebase artifacts can be deployed with:
+`pnpm release:verify` runs lint, build, unit tests, Firebase rules tests, and a smoke test against the built app.
+
+## Firebase deployment
+The deploy scripts are environment-driven so the repo can be forked safely:
 
 ```bash
-npx -y firebase-tools@latest deploy --only firestore:rules,firestore:indexes --project your-firebase-project-id
+FIREBASE_PROJECT_ID=your-project-id FIREBASE_PREVIEW_CHANNEL=preview pnpm release:preview
+FIREBASE_PROJECT_ID=your-project-id pnpm release:live
 ```
 
-If Firebase Storage has already been initialized for the project, deploy storage rules too:
+If you prefer Firebase CLI project aliases locally, copy `.firebaserc.example` to `.firebaserc` and replace the placeholder project ID.
 
-```bash
-npx -y firebase-tools@latest deploy --only firestore:rules,firestore:indexes,storage --project your-firebase-project-id
-```
+## Docs
+- Docs hub: [docs/README.md](docs/README.md)
+- Product: [docs/product/vision.md](docs/product/vision.md), [docs/product/mvp.md](docs/product/mvp.md)
+- Growth: [docs/growth/gtm.md](docs/growth/gtm.md), [docs/growth/content-marketing.md](docs/growth/content-marketing.md), [docs/growth/blog-seo-guide.md](docs/growth/blog-seo-guide.md), [docs/growth/blog-operations-runbook.md](docs/growth/blog-operations-runbook.md)
+- Engineering: [docs/engineering/architecture.md](docs/engineering/architecture.md), [docs/engineering/firebase-setup.md](docs/engineering/firebase-setup.md)
+- Operations: [docs/operations/firebase-hosting-note.md](docs/operations/firebase-hosting-note.md), [docs/operations/firebase-release-runbook.md](docs/operations/firebase-release-runbook.md)
+- Build in public: [docs/build-in-public/project-status.md](docs/build-in-public/project-status.md)
 
-For Google sign-in, use the Firebase Auth helper domain in `VITE_FIREBASE_AUTH_DOMAIN` (for this project: `your-firebase-project-id.firebaseapp.com`) unless you have explicitly configured and whitelisted a different `__/auth/handler` redirect URI.
-Confirm Firebase Authentication authorized domains include the canonical custom domain `reconcile.sqncs.com` and the Firebase Auth fallback `your-firebase-project-id.firebaseapp.com`.
-App Check enforcement is intentionally deferred in this production-hardening pass; only configure `VITE_FIREBASE_APPCHECK_SITE_KEY` when Storage App Check is already enabled for the project.
+## Open source posture
+This repository is public as a reference implementation and build-in-public artifact. Issues and pull requests are welcome, but maintainer response time is best effort and not guaranteed.
 
-If Firebase CLI management commands start failing with `Your credentials are no longer valid`, refresh them with:
+See:
+- [CONTRIBUTING.md](CONTRIBUTING.md)
+- [SECURITY.md](SECURITY.md)
+- [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)
 
-```bash
-npx -y firebase-tools@latest login --reauth
-```
-
-Rollback guidance lives in [docs/firebase-release-runbook.md](docs/firebase-release-runbook.md).
+## License
+[MIT](LICENSE)

@@ -2,7 +2,6 @@ import fs from 'node:fs/promises'
 import path from 'node:path'
 
 import {
-  CANONICAL_SITE_ORIGIN,
   distDir,
   getSiteOrigin,
   loadPosts,
@@ -16,7 +15,7 @@ import {
 async function main() {
   const isReleaseBuild =
     process.env.npm_lifecycle_event === 'build' || process.env.CI === 'true' || process.env.FIREBASE_DEPLOY === 'true'
-  const siteOrigin = getSiteOrigin({ strict: isReleaseBuild, enforceCanonical: isReleaseBuild })
+  const siteOrigin = getSiteOrigin({ strict: isReleaseBuild })
   const posts = await loadPosts()
   const blogDir = path.join(distDir, 'blog')
 
@@ -33,7 +32,7 @@ async function main() {
   await fs.writeFile(path.join(distDir, 'rss.xml'), renderRssFeed(posts, siteOrigin))
   await fs.writeFile(path.join(distDir, 'robots.txt'), renderRobots(siteOrigin))
 
-  const releaseNote = isReleaseBuild ? ` (canonical origin: ${CANONICAL_SITE_ORIGIN})` : ''
+  const releaseNote = isReleaseBuild ? ` (site origin: ${siteOrigin})` : ''
   console.log(`Rendered ${posts.length} blog article(s) into dist/blog.${releaseNote}`)
 }
 

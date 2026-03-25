@@ -2,8 +2,30 @@
   "name": "recon-workspace",
   "private": true,
   "version": "0.0.0",
+  "description": "Build-in-public reconciliation workspace for bookkeepers and small finance teams.",
   "type": "module",
+  "license": "MIT",
   "packageManager": "pnpm@10.26.0",
+  "homepage": "https://reconcile.sqncs.com/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hyunghwan/recon-workspace.git"
+  },
+  "bugs": {
+    "url": "https://github.com/hyunghwan/recon-workspace/issues"
+  },
+  "keywords": [
+    "reconciliation",
+    "bookkeeping",
+    "finance-ops",
+    "firebase",
+    "react",
+    "vite"
+  ],
+  "engines": {
+    "node": ">=22",
+    "pnpm": ">=10"
+  },
   "scripts": {
     "dev": "vite",
     "build": "node scripts/blog-check.mjs && tsc -b && vite build && node scripts/blog-render.mjs",

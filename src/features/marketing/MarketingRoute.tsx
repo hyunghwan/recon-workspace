@@ -64,14 +64,16 @@ export default function MarketingRoute() {
                 <Button asChild variant="ghost" className="rounded-xl text-muted-foreground">
                   <a href="/blog/">Blog</a>
                 </Button>
-                <Button
-                  variant="ghost"
-                  className="rounded-xl text-muted-foreground"
-                  onClick={() => void handleGoogleEntry('default')}
-                  disabled={authBusy !== null}
-                >
-                  {user ? 'Open workspace' : 'Sign in'}
-                </Button>
+                {!user ? (
+                  <Button
+                    variant="ghost"
+                    className="rounded-xl text-muted-foreground"
+                    onClick={() => void handleGoogleEntry('default')}
+                    disabled={authBusy !== null}
+                  >
+                    Sign in
+                  </Button>
+                ) : null}
                 <Button
                   className="rounded-xl bg-[#173f39] text-white hover:bg-[#0f312b]"
                   onClick={() => void handleGoogleEntry('default')}

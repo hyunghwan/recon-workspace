@@ -2,45 +2,74 @@ name: Preview Deploy
 
 on:
   workflow_dispatch:
+    inputs:
+      site_origin:
+        description: Canonical public origin used during build verification
+        required: false
+        default: https://reconcile.sqncs.com
+      preview_channel:
+        description: Firebase Hosting preview channel
+        required: false
+        default: preview
 
 jobs:
   preview:
     runs-on: ubuntu-latest
     env:
-      SITE_ORIGIN: https://reconcile.sqncs.com
+      SITE_ORIGIN: ${{ inputs.site_origin || vars.SITE_ORIGIN || 'https://reconcile.sqncs.com' }}
+      FIREBASE_PROJECT_ID: ${{ vars.FIREBASE_PROJECT_ID }}
+      FIREBASE_PREVIEW_CHANNEL: ${{ inputs.preview_channel || 'preview' }}
       FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
     steps:
+      - name: Check deploy configuration
+        id: config
+        run: |
+          if [[ -z "${FIREBASE_PROJECT_ID:-}" || -z "${FIREBASE_TOKEN:-}" ]]; then
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            echo "Preview deploy is disabled. Set FIREBASE_PROJECT_ID as a repository variable and FIREBASE_TOKEN as a secret to enable it."
+          else
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          fi
+
       - uses: actions/checkout@v4
+        if: steps.config.outputs.enabled == 'true'
 
       - uses: pnpm/action-setup@v4
+        if: steps.config.outputs.enabled == 'true'
         with:
           version: 10.26.0
 
       - uses: actions/setup-node@v4
+        if: steps.config.outputs.enabled == 'true'
         with:
           node-version: 22
           cache: pnpm
 
       - name: Install Java
+        if: steps.config.outputs.enabled == 'true'
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '21'
 
       - name: Install dependencies
+        if: steps.config.outputs.enabled == 'true'
         run: pnpm install --frozen-lockfile
 
       - name: Install Playwright browser
+        if: steps.config.outputs.enabled == 'true'
         run: pnpm exec playwright install --with-deps chromium
 
       - name: Run release verification
+        if: steps.config.outputs.enabled == 'true'
         run: pnpm release:verify
 
       - name: Deploy preview channel
-        run: npx -y firebase-tools@latest hosting:channel:deploy preprod --project your-firebase-project-id --token "$FIREBASE_TOKEN"
+        if: steps.config.outputs.enabled == 'true'
+        run: pnpm release:preview
 
       - name: Upload evidence
-        if: always()
+        if: always() && steps.config.outputs.enabled == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: preview-evidence
