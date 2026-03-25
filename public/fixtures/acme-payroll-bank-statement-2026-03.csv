@@ -1,0 +1,4 @@
+txn_date,posted_date,description,merchant,amount,reference
+2026-03-15,2026-03-15,Gusto payroll batch 0315,Gusto,-15240.91,payroll-run-mar15
+2026-03-29,2026-03-29,Gusto payroll batch 0329,Gusto,-15102.42,payroll-run-mar29
+2026-03-31,2026-03-31,State disability remittance,CA EDD,-422.13,sdi-mar

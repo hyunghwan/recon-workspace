@@ -1,0 +1,6 @@
+transaction_date,post_date,memo,merchant,amount,reference
+2026-03-08,2026-03-08,Delta client travel,Delta Air Lines,-438.21,
+2026-03-10,2026-03-10,Hyatt client onsite lodging,Hyatt,-612.40,hyatt-883
+2026-03-17,2026-03-17,Notion workspace renewal,Notion,-96.00,notion-2026-03
+2026-03-21,2026-03-21,Uber airport ride,Uber,-63.18,uber-lax-321
+2026-03-27,2026-03-27,Office snacks,Blue Bottle,-86.34,

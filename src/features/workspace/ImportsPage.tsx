@@ -33,6 +33,7 @@ import {
   sourceTypeLabel,
   sourceTypeOrder,
 } from '@/utils'
+import { monthlyFixtureDownloads, sampleTemplateDownloads } from '@/sample-csv-fixtures'
 import { WorkspaceChecklistState } from './workspace-empty-states'
 import { useWorkspace } from './workspace-context'
 import { SourceBadge } from './workspace-shared'
@@ -481,31 +482,51 @@ export default function ImportsPage() {
                   onClick={() => setShowTemplateHelp((current) => !current)}
                 >
                   <div>
-                    <p className="text-sm font-medium tracking-tight text-[#102d28]">Need a template?</p>
+                    <p className="text-sm font-medium tracking-tight text-[#102d28]">Need sample files?</p>
                     <p className="mt-1 text-sm leading-6 text-[#617a73]">
-                      Keep templates hidden unless you need an example file layout.
+                      Keep the downloads hidden unless you want quick templates or a realistic month pack.
                     </p>
                   </div>
                   {showTemplateHelp ? <ChevronUp className="text-[#617a73]" /> : <ChevronDown className="text-[#617a73]" />}
                 </button>
 
                 {showTemplateHelp && (
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    <Button asChild variant="outline" className="rounded-lg border-slate-200 bg-white">
-                      <a href="/sample-statement.csv" download>
-                        Statement template
-                      </a>
-                    </Button>
-                    <Button asChild variant="outline" className="rounded-lg border-slate-200 bg-white">
-                      <a href="/sample-payout.csv" download>
-                        Payout template
-                      </a>
-                    </Button>
-                    <Button asChild variant="outline" className="rounded-lg border-slate-200 bg-white">
-                      <a href="/sample-supporting.csv" download>
-                        Supporting template
-                      </a>
-                    </Button>
+                  <div className="mt-4 space-y-4">
+                    <div className="space-y-2">
+                      <div>
+                        <p className="text-sm font-medium tracking-tight text-[#102d28]">Quick templates</p>
+                        <p className="text-sm leading-6 text-[#617a73]">
+                          Small starter files for checking a column layout before you upload real data.
+                        </p>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {sampleTemplateDownloads.map((item) => (
+                          <Button key={item.href} asChild variant="outline" className="rounded-lg border-slate-200 bg-white">
+                            <a href={item.href} download>
+                              {item.label}
+                            </a>
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="space-y-2 border-t border-[#e5ece9] pt-4">
+                      <div>
+                        <p className="text-sm font-medium tracking-tight text-[#102d28]">Realistic month pack</p>
+                        <p className="text-sm leading-6 text-[#617a73]">
+                          Six realistic March files plus one generic export that should require a manual type choice.
+                        </p>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {monthlyFixtureDownloads.map((item) => (
+                          <Button key={item.href} asChild variant="outline" className="rounded-lg border-slate-200 bg-white">
+                            <a href={item.href} download>
+                              {item.label}
+                            </a>
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>

@@ -1,0 +1,8 @@
+date,description,merchant,amount,reference,group_key
+2026-03-04,ACH Deposit Shopify 49822,Shopify,8421.62,49822,payout-49822
+2026-03-19,ACH Deposit Shopify 49897,Shopify,5290.11,49897,payout-49897
+2026-03-06,Adobe Creative Cloud annual,Adobe,-659.88,adobe-2026,
+2026-03-08,ATM cash withdrawal,Cash Withdrawal,-300.00,petty-cash-mar,
+2026-03-12,Wire transfer Northstar Design,Northstar Design,-1200.00,northstar-0331,
+2026-03-15,Payroll tax debit,Gusto Tax,-1892.33,payroll-tax-mar,
+2026-03-28,Bank fee monthly analysis,Bank Service,-45.00,,

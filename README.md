@@ -16,6 +16,7 @@ This repository contains:
 - authenticated sample onboarding plus Firebase-backed workspace persistence
 - Firebase Auth + Firestore + Storage integration for pilot users
 - sample CSV templates in `/public`
+- a realistic monthly CSV fixture pack in `/public/fixtures`
 - a Firebase Hosting-first front-end build
 
 ## Docs

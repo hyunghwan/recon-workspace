@@ -1,0 +1,5 @@
+created_at,line_item,vendor,total,document_id,note
+2026-03-06,Adobe annual invoice,Adobe,659.88,adobe-2026,Exact support for annual software charge
+2026-03-12,Northstar contractor invoice,Northstar Design,1200.00,northstar-0331,Monthly contractor work
+2026-03-15,Payroll tax notice,Gusto Tax,1892.33,payroll-tax-mar,Supporting notice for tax debit
+2026-03-17,Notion workspace renewal,Notion,96.00,notion-2026-03,Recurring SaaS invoice

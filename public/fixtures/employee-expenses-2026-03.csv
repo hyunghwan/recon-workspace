@@ -1,0 +1,6 @@
+date,line_item,vendor,total,document_id,note
+2026-03-08,Delta client travel receipt,Delta Air Lines,438.21,delta-trip-a,Receipt candidate one
+2026-03-08,Delta backup travel receipt,Delta Air Lines,438.21,delta-trip-b,Receipt candidate two
+2026-03-10,Hyatt client onsite lodging,Hyatt,612.40,hyatt-883,Hotel folio exact support
+2026-03-08,Petty cash replenishment,Cash Withdrawal,280.00,petty-cash-mar,Near match that should become exception
+2026-03-21,Uber airport ride,Uber,63.18,uber-lax-321,Travel receipt exact support
