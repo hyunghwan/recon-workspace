@@ -7,7 +7,7 @@ Use this runbook to keep the Recon Workspace blog publishing consistently withou
 1. Pick one keyword with clear workflow intent.
 2. Confirm the search intent is close to our product wedge: reconciliation prep, missing docs, unresolved items, month-end close.
 3. Draft the article in `content/blog/<slug>.md`.
-4. Generate one hero image with [`$imagegen`](imagegen skill).
+4. Generate one hero image with the `imagegen` skill.
 5. Run `pnpm blog:check`.
 6. Run `SITE_ORIGIN=https://reconcile.sqncs.com pnpm build`, replacing the origin only if you are publishing a fork under a different domain.
 7. Review the built pages with `pnpm preview`.
@@ -30,7 +30,7 @@ Use this runbook to keep the Recon Workspace blog publishing consistently withou
 - Add at least 2 internal links, usually `/` and `/app`, plus optional blog-to-blog links.
 
 ## Image generation workflow
-- Skill: [`$imagegen`](imagegen skill)
+- Skill: `imagegen`
 - Output path: `public/blog/images/<slug>.jpg`
 - Use a landscape size such as `1536x1024`
 - Keep the image text-free, brand-free, and editorial
