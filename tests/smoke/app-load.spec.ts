@@ -21,8 +21,9 @@ test('loads landing page with sign-up-first messaging', async ({ page }) => {
   await expect(page.getByRole('heading', { level: 1 })).toContainText(
     'Know what still needs support before month-end close.',
   )
-  await expect(page.getByRole('main').getByRole('button', { name: 'Start with Google' })).toBeVisible()
-  await expect(page.getByRole('button', { name: 'Import a CSV' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Start with Google' }).first()).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Import a CSV' }).first()).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Blog' })).toHaveCount(0)
   await expect(page.getByText('Open the sample workspace')).toHaveCount(0)
 
   await page.screenshot({ path: `${evidenceDir}/task-4-landing-signup-first.png`, fullPage: true })
@@ -34,7 +35,7 @@ test('gates workspace routes behind sign-in and still serves generated blog outp
 
   await page.goto('/app')
   await expect(page.getByRole('heading', { name: 'Sign in to open your clients' })).toBeVisible()
-  await expect(page.getByText('delete the sample data', { exact: false })).toBeVisible()
+  await expect(page.getByText('review the starter month once', { exact: false })).toBeVisible()
   await expect(page.getByText('Client', { exact: true })).toHaveCount(0)
 
   await page.goto(gatedQueuePath)

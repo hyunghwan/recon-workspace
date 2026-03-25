@@ -82,19 +82,17 @@ function WorkspaceLoadingState() {
       <Card className="w-full max-w-md border border-white/70 bg-white/90 shadow-[0_20px_60px_-36px_rgba(15,23,42,0.45)]">
         <CardHeader className="space-y-4">
           <ReconLockup
-            subtitle="Loading the right client and month before review opens."
+            subtitle="Preparing your workspace."
             markClassName="h-12 w-12"
             titleClassName="text-base font-semibold text-[#102d28]"
             subtitleClassName="text-sm text-[#617a73]"
           />
-          <CardTitle>Opening your month</CardTitle>
+          <CardTitle>Opening your workspace</CardTitle>
           <CardDescription>
-            Loading the right client and month before opening the review list.
+            Loading your saved clients and the current close month.
           </CardDescription>
         </CardHeader>
-        <CardContent className="text-sm text-muted-foreground">
-          If you have a cloud session, your saved data will load first.
-        </CardContent>
+        <CardContent className="text-sm text-muted-foreground">If you already signed in, your saved work will appear automatically.</CardContent>
       </Card>
     </div>
   )
@@ -112,7 +110,7 @@ function WorkspaceSignInState({
       <Card className="w-full max-w-xl border border-white/70 bg-white/95 shadow-[0_20px_60px_-36px_rgba(15,23,42,0.45)]">
         <CardHeader className="space-y-4">
           <ReconLockup
-            subtitle="Sign in, review the sample month, then swap in your own data."
+            subtitle="Keep month-end review in one place."
             markClassName="h-12 w-12"
             titleClassName="text-base font-semibold text-[#102d28]"
             subtitleClassName="text-sm text-[#617a73]"
@@ -120,7 +118,7 @@ function WorkspaceSignInState({
           <div className="space-y-2">
             <h1 className="text-2xl font-semibold tracking-tight text-[#102d28]">Sign in to open your clients</h1>
             <CardDescription className="text-sm leading-6">
-              New accounts start with a sample client and month inside the app so you can see the flow immediately. You can delete the sample data as soon as you are ready to upload your own files.
+              Open the workspace, review the starter month once, then replace it with your own client data whenever you are ready.
             </CardDescription>
           </div>
         </CardHeader>
@@ -148,7 +146,7 @@ function WorkspaceBlankState() {
     <WorkspaceChecklistState
       eyebrow="Your client list is empty"
       title="Start with one client and one close month."
-      description="Create the first client, add the month you are closing, and then bring in the files you want to review."
+      description="Create your first client, add the month you are closing, and then bring in the files you want to review."
       primaryAction={{
         label: 'Create client',
         onClick: () => setShowNewWorkspaceForm(true),
@@ -156,7 +154,7 @@ function WorkspaceBlankState() {
       steps={[
         {
           title: 'Create a client',
-          body: 'Give each client its own file list and review trail so the month-end work stays separated.',
+          body: 'Keep each client on its own workspace so the file list and review trail stay clear.',
         },
         {
           title: 'Add the month you are closing',

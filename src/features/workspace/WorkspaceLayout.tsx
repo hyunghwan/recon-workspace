@@ -83,23 +83,45 @@ export default function WorkspaceLayout() {
       : currentPage === 'follow-up'
         ? 'What still needs follow-up'
         : 'Transactions that still need attention'
+  const currentWorkflowLabel =
+    currentPage === 'imports'
+      ? 'Files'
+      : currentPage === 'follow-up'
+        ? 'Follow-up'
+        : 'Review'
 
   return (
     <div className="min-h-screen bg-[#eff3f2] text-foreground lg:h-dvh lg:overflow-hidden">
-      <div className="grid min-h-screen lg:h-full lg:min-h-0 lg:grid-cols-[288px_minmax(0,1fr)]">
-        <aside className="border-b border-[#dbe3e0] bg-[#f7f9f8] lg:min-h-0 lg:overflow-y-auto lg:border-b-0 lg:border-r">
-          <div className="flex flex-col gap-5 px-4 py-4 sm:px-6 lg:min-h-full lg:px-5 lg:py-5">
-            <div className="space-y-4">
+      <div className="grid min-h-screen lg:h-full lg:min-h-0 lg:grid-cols-[272px_minmax(0,1fr)]">
+        <aside className="border-b border-[#dbe3e0] bg-[#f8fbf9] lg:min-h-0 lg:overflow-y-auto lg:border-b-0 lg:border-r">
+          <div className="flex flex-col gap-6 px-4 py-4 sm:px-6 lg:min-h-full lg:px-5 lg:py-5">
+            <div className="space-y-5">
               <Link to="/" className="inline-flex">
                 <ReconLockup
-                  subtitle="A cleaner month-end review flow"
                   markClassName="h-11 w-11"
                   titleClassName="text-sm text-foreground"
-                  subtitleClassName="text-xs text-muted-foreground"
                 />
               </Link>
 
               <section className="space-y-4">
+                <div className="rounded-[24px] border border-[#dbe3e0] bg-white px-4 py-4 shadow-[0_24px_50px_-40px_rgba(16,45,40,0.25)]">
+                  <div className="space-y-3">
+                    <div>
+                      <p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">Workspace</p>
+                      <p className="mt-1 text-sm font-medium tracking-tight text-foreground">{currentWorkspaceName}</p>
+                      <p className="mt-1 text-xs text-[#617a73]">
+                        {currentMonthName} · {currentWorkflowLabel}
+                      </p>
+                    </div>
+                    <div className="grid gap-0 divide-y divide-[#e2e8e5] rounded-xl border border-[#e2e8e5] bg-[#fafcfb]">
+                      <SidebarMetric label="Need review" value={stats?.ambiguous ?? 0} />
+                      <SidebarMetric label="Need support" value={stats?.unmatched ?? 0} />
+                      <SidebarMetric label="Files" value={importsCount} />
+                      <SidebarMetric label="Transactions" value={recordsCount} />
+                    </div>
+                  </div>
+                </div>
+
                 <div className="space-y-3">
                   <div className="flex items-center justify-between gap-3">
                     <div>
@@ -204,8 +226,6 @@ export default function WorkspaceLayout() {
                     </div>
                   )}
                 </div>
-
-                <div className="h-px bg-[#e2e8e5]" />
 
                 <div className="space-y-3">
                   <div className="flex items-center justify-between gap-3">
@@ -327,40 +347,23 @@ export default function WorkspaceLayout() {
               </nav>
             </div>
 
-            <section className="mt-auto space-y-4 border border-[#e2e8e5] bg-white px-4 py-4">
-              <div className="space-y-1">
-                <p className="text-sm font-medium tracking-tight text-[#102d28]">Current selection</p>
-                <p className="text-xs leading-5 text-[#617a73]">
-                  Pick a client first, choose the month you are closing, then move through files, review, and follow-up.
-                </p>
+            <details className="mt-auto rounded-[22px] border border-[#dbe3e0] bg-white px-4 py-4">
+              <summary className="cursor-pointer list-none text-sm font-medium tracking-tight text-[#102d28]">
+                Workspace settings
+              </summary>
+              <div className="mt-4 space-y-4">
+                <div className="space-y-3 rounded-xl border border-[#e2e8e5] bg-[#fafcfb] p-3">
+                  <ContextRow label="Client" value={currentWorkspaceName} />
+                  <ContextRow label="Month" value={currentMonthName} />
+                  <ContextRow label="Workflow" value={currentWorkflowLabel} />
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <Button asChild variant="ghost" className="rounded-lg text-muted-foreground">
+                    <Link to="/">View home</Link>
+                  </Button>
+                </div>
               </div>
-              <div className="space-y-3 rounded-xl border border-[#e2e8e5] bg-[#fafcfb] p-3">
-                <ContextRow label="Client" value={currentWorkspaceName} />
-                <ContextRow label="Month" value={currentMonthName} />
-                <ContextRow
-                  label="Workflow"
-                  value={
-                    currentPage === 'imports'
-                      ? 'Files'
-                      : currentPage === 'follow-up'
-                        ? 'Follow-up'
-                        : 'Review'
-                  }
-                />
-              </div>
-              <div className="grid gap-0 divide-y divide-[#e2e8e5] rounded-xl border border-[#e2e8e5] bg-[#fafcfb] sm:grid-cols-2 sm:divide-x sm:divide-y-0 lg:grid-cols-1 lg:divide-x-0 lg:divide-y">
-                <SidebarMetric label="Need review" value={stats?.ambiguous ?? 0} />
-                <SidebarMetric label="Need support" value={stats?.unmatched ?? 0} />
-                <SidebarMetric label="Files" value={importsCount} />
-                <SidebarMetric label="Transactions" value={recordsCount} />
-              </div>
-            </section>
-
-            <div className="flex flex-wrap gap-2">
-              <Button asChild variant="ghost" className="rounded-lg text-muted-foreground">
-                <Link to="/">View home page</Link>
-              </Button>
-            </div>
+            </details>
           </div>
         </aside>
 
@@ -405,15 +408,19 @@ export default function WorkspaceLayout() {
                     </Button>
                   )}
                   <Button
-                    variant="outline"
-                    className="rounded-lg border-[#dce4e1] bg-white"
+                    variant="ghost"
+                    className="rounded-lg text-[#617a73] hover:bg-white/80 hover:text-[#102d28]"
                     onClick={handleManualSave}
                     disabled={syncing}
                   >
                     <Save />
                     {syncing ? 'Syncing...' : 'Sync'}
                   </Button>
-                  <Button variant="outline" className="rounded-lg border-[#dce4e1] bg-white" onClick={handleSignOut}>
+                  <Button
+                    variant="ghost"
+                    className="rounded-lg text-[#617a73] hover:bg-white/80 hover:text-[#102d28]"
+                    onClick={handleSignOut}
+                  >
                     <LogOut />
                     Sign out
                   </Button>
@@ -439,13 +446,13 @@ export default function WorkspaceLayout() {
           <main className="flex-1 px-4 py-4 sm:px-6 lg:flex lg:min-h-0 lg:flex-col lg:overflow-y-auto lg:px-8 lg:py-6 xl:overflow-hidden">
             <div className="flex min-h-0 flex-1 flex-col">
               {isCurrentWorkspaceSample && (
-                <section className="mb-4 flex flex-col gap-4 border border-[#ead7d7] bg-[#fff7f5] px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+                <section className="mb-4 flex flex-col gap-4 rounded-[24px] border border-[#e5d7d1] bg-[#fffaf7] px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
                   <div className="space-y-1">
                     <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-[#8a3d3d]">
-                      Sample data
+                      Starter workspace
                     </p>
                     <p className="text-sm leading-6 text-[#6f4a4a]">
-                      This sample client is here to show the product in context. Delete the sample data when you are ready to upload your own files.
+                      Use this starter month to get oriented, then replace it with your own client and files when you are ready.
                     </p>
                   </div>
                   <div className="flex flex-wrap gap-2">
@@ -454,11 +461,11 @@ export default function WorkspaceLayout() {
                       className="rounded-xl border-[#d8c5c5] bg-white"
                       onClick={() => {
                         setShowNewWorkspaceForm(true)
-                        setCloudMessage('Create your own client, then delete the sample data when you are ready.')
+                        setCloudMessage('Create your client first, then remove the starter workspace whenever you are ready.')
                       }}
                     >
                       <FolderPlus />
-                      Create my client
+                      Create client
                     </Button>
                     <Button
                       className="rounded-xl bg-[#9b3f3f] text-white hover:bg-[#842f2f]"
@@ -469,7 +476,7 @@ export default function WorkspaceLayout() {
                       }}
                     >
                       <Trash2 />
-                      Delete sample data
+                      Remove starter workspace
                     </Button>
                   </div>
                 </section>

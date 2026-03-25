@@ -14,19 +14,17 @@ function LoadingShell() {
       <Card className="w-full max-w-md border border-white/70 bg-white/90 shadow-[0_20px_60px_-36px_rgba(15,23,42,0.45)]">
         <CardHeader className="space-y-4">
           <ReconLockup
-            subtitle="A tighter mark for month-end review."
+            subtitle="A tighter workspace for month-end review."
             markClassName="h-12 w-12"
             titleClassName="text-base font-semibold text-[#102d28]"
             subtitleClassName="text-sm text-[#617a73]"
           />
           <CardTitle>Loading Recon Workspace</CardTitle>
           <CardDescription>
-            Preparing the right experience for either the marketing site or the workspace app.
+            Preparing the product experience.
           </CardDescription>
         </CardHeader>
-        <CardContent className="text-sm text-muted-foreground">
-          Route-level loading keeps the marketing landing and the app workspace from sharing one oversized shell.
-        </CardContent>
+        <CardContent className="text-sm text-muted-foreground">Loading the landing page or your workspace now.</CardContent>
       </Card>
     </div>
   )

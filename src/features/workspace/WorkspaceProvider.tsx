@@ -5,7 +5,7 @@ import {
   useState,
   type ReactNode,
 } from 'react'
-import { useLocation, useNavigate, useParams } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 
 import {
   beginGoogleSignIn,
@@ -61,6 +61,7 @@ import {
   isSampleWorkspaceRecord,
   shouldAutoSeedSampleWorkspace,
 } from './workspace-onboarding'
+import { resolveWorkspaceRouteParams } from './workspace-route-params'
 import type { AppPage } from './workspace-utils'
 import {
   addWorkspaceBundle,
@@ -252,7 +253,6 @@ function buildSnapshotDefaultPath(snapshot: ReconSnapshot, page: AppPage = 'queu
 export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const navigate = useNavigate()
   const location = useLocation()
-  const params = useParams()
   const { ready: authReady, user } = useAuthSession()
   const emptySnapshot = useMemo(() => createEmptySnapshot(), [])
 
@@ -271,8 +271,7 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const cloudEnabled = isFirebaseConfigured
 
   const currentPage = resolveAppPage(location.pathname)
-  const workspaceIdParam = params.workspaceId
-  const periodIdParam = params.periodId
+  const { workspaceId: workspaceIdParam, periodId: periodIdParam } = resolveWorkspaceRouteParams(location.pathname)
 
   useEffect(() => {
     saveSnapshot(snapshot)
